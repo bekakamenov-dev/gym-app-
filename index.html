@@ -46,6 +46,7 @@
 }
 *{box-sizing:border-box}
 html,body{height:100%}
+html{background:linear-gradient(var(--bg) calc(100% - 70px),var(--surface) calc(100% - 70px))}
 body{background:var(--bg);color:var(--fg);font-family:var(--f-body);font-size:15px;line-height:1.45;-webkit-tap-highlight-color:transparent}
 body::before{content:"";position:fixed;inset:0 0 auto;height:var(--top);z-index:30;background:var(--bg)}
 button{font:inherit;color:inherit;border:0;background:none;cursor:pointer;padding:0}
@@ -420,8 +421,15 @@ function vToday(){
     <div class="ticks num"><span>0</span><span>50</span><span>100 кг</span></div>
     <div class="muted" style="font-size:13px">${bb?`Расчётный максимум на 1 раз по лучшему подходу ${fmtKg(bb.w)}×${bb.r} (${fdate(bb.date)}). До цели ${fmtKg(Math.max(0,Math.round((GOAL_BENCH-bb.v)*2)/2))} кг.`:"Появится после первой тренировки с жимом лёжа."}</div>
   </div>
-  <div class="muted num" style="text-align:center;font-size:11px">версия 3 · ${S.workouts.length?"данные на телефоне":"данных пока нет"}</div>
+  <div class="muted num" style="text-align:center;font-size:11px">версия 4 · ${S.workouts.length?"данные на телефоне":"данных пока нет"}<br>${diag()}</div>
   </div>`;
+}
+function diag(){
+  try{const d=document.createElement("div");d.style.cssText="position:fixed;visibility:hidden;padding:env(safe-area-inset-top,0px) 0 env(safe-area-inset-bottom,0px) 0";document.body.appendChild(d);
+  const cs=getComputedStyle(d),t=Math.round(parseFloat(cs.paddingTop)||0),b=Math.round(parseFloat(cs.paddingBottom)||0);d.remove();
+  const tb=document.querySelector(".tabs"),gap=tb?Math.round(innerHeight-tb.getBoundingClientRect().bottom):"-";
+  return "окно "+innerWidth+"×"+innerHeight+" · экран "+screen.width+"×"+screen.height+" · вырез "+t+"/"+b+" · зазор "+gap+(navigator.standalone?" · app":" · браузер");
+  }catch(e){return "диагностика недоступна"}
 }
 function vHistory(){
   if(!S.workouts.length) return `<div class="top"><h1>История</h1></div><div class="stack">${storeNote()}<div class="list"><div class="empty">Здесь появятся завершённые тренировки: дата, программа, время, тоннаж и все подходы.<br><br><button class="btn primary sm" data-tab-go="today">Начать первую</button></div></div>${backupCard()}</div>`;
@@ -650,7 +658,11 @@ document.addEventListener("visibilitychange",()=>{if(!document.hidden&&S.active&
 
 render();
 connect();
-if("serviceWorker" in navigator){addEventListener("load",()=>navigator.serviceWorker.register("sw.js").catch(()=>{}))}
+if("serviceWorker" in navigator){
+  const had=!!navigator.serviceWorker.controller;
+  navigator.serviceWorker.addEventListener("controllerchange",()=>{if(had&&!S.active&&!window.__rl){window.__rl=1;location.reload()}});
+  addEventListener("load",()=>navigator.serviceWorker.register("sw.js",{updateViaCache:"none"}).then(r=>r.update()).catch(()=>{}));
+}
 </script>
 </body>
 </html>
