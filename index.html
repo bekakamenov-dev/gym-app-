@@ -12,7 +12,7 @@
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="icon-180.png">
 <link rel="icon" href="icon-192.png">
-<style>:root{padding:0;--top:max(calc(env(safe-area-inset-top,0px) - 12px),0px);--bot:calc(env(safe-area-inset-bottom,0px)*.4)}body{margin:0}img{max-width:100%}[hidden]{display:none!important}</style>
+<style>:root{padding:0;--gap:0px;--top:max(calc(env(safe-area-inset-top,0px) - 12px),0px);--bot:calc(env(safe-area-inset-bottom,0px)*.4)}body{margin:0}img{max-width:100%}[hidden]{display:none!important}</style>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Unbounded:wght@500;700&family=Golos+Text:wght@400;500;600;700&family=JetBrains+Mono:wght@500;700&display=swap">
 <style>
@@ -46,7 +46,6 @@
 }
 *{box-sizing:border-box}
 html,body{height:100%}
-html{background:linear-gradient(var(--bg) calc(100% - 70px),var(--surface) calc(100% - 70px))}
 body{background:var(--bg);color:var(--fg);font-family:var(--f-body);font-size:15px;line-height:1.45;-webkit-tap-highlight-color:transparent}
 body::before{content:"";position:fixed;inset:0 0 auto;height:var(--top);z-index:30;background:var(--bg)}
 button{font:inherit;color:inherit;border:0;background:none;cursor:pointer;padding:0}
@@ -105,7 +104,7 @@ h2{font-family:var(--f-display);font-weight:500;font-size:15px;letter-spacing:.0
 .ticks{display:flex;justify-content:space-between;font-size:11px;color:var(--faint)}
 
 /* tab bar */
-.tabs{position:fixed;left:0;right:0;bottom:0;z-index:20;background:var(--surface);border-top:1px solid var(--line);padding-bottom:var(--bot);padding-left:env(safe-area-inset-left,0px);padding-right:env(safe-area-inset-right,0px)}
+.tabs{position:fixed;left:0;right:0;bottom:calc(0px - var(--gap));z-index:20;background:var(--surface);border-top:1px solid var(--line);padding-bottom:var(--bot);padding-left:env(safe-area-inset-left,0px);padding-right:env(safe-area-inset-right,0px)}
 .tabs nav{max-width:520px;margin:0 auto;display:grid;grid-template-columns:repeat(4,1fr)}
 .tabs button{display:flex;flex-direction:column;align-items:center;gap:3px;padding:9px 0 8px;font-size:11px;color:var(--faint);font-weight:500}
 .tabs button[aria-current="page"]{color:var(--fg)}
@@ -121,7 +120,7 @@ h2{font-family:var(--f-display);font-weight:500;font-size:15px;letter-spacing:.0
 .chev{color:var(--faint)}
 
 /* workout layer */
-.layer{position:fixed;inset:0;z-index:40;background:var(--bg);overflow-y:auto;-webkit-overflow-scrolling:touch;padding-top:var(--top)}
+.layer{position:fixed;inset:0 0 calc(0px - var(--gap)) 0;z-index:40;background:var(--bg);overflow-y:auto;-webkit-overflow-scrolling:touch;padding-top:var(--top)}
 .layer-in{max-width:520px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:0 calc(130px + var(--bot))}
 .whead{position:sticky;top:0;z-index:5;background:var(--bg);padding-block:12px 10px;display:flex;align-items:center;gap:12px;border-bottom:1px solid var(--line)}
 .whead .grow{flex:1;min-width:0}
@@ -153,7 +152,7 @@ h2{font-family:var(--f-display);font-weight:500;font-size:15px;letter-spacing:.0
 .ex-f{display:flex;gap:8px;justify-content:space-between;align-items:center}
 .linkbtn{font-size:14px;font-weight:600;color:var(--plate-b);padding:6px 0}
 
-.restbar{position:fixed;left:0;right:0;bottom:0;z-index:45;background:var(--fg);color:var(--bg);padding:12px max(16px,env(safe-area-inset-right,0px)) calc(12px + var(--bot)) max(16px,env(safe-area-inset-left,0px))}
+.restbar{position:fixed;left:0;right:0;bottom:calc(0px - var(--gap));z-index:45;background:var(--fg);color:var(--bg);padding:12px max(16px,env(safe-area-inset-right,0px)) calc(12px + var(--bot)) max(16px,env(safe-area-inset-left,0px))}
 .restbar .in{max-width:520px;margin:0 auto;display:flex;align-items:center;gap:12px}
 .restbar .time{font-family:var(--f-num);font-size:30px;font-weight:700;font-variant-numeric:tabular-nums;min-width:96px}
 .restbar .grow{flex:1;min-width:0}
@@ -165,7 +164,7 @@ h2{font-family:var(--f-display);font-weight:500;font-size:15px;letter-spacing:.0
 .restbar.over button{color:#fff}
 
 /* sheet */
-.scrim{position:fixed;inset:0;z-index:60;background:rgba(10,12,16,.5);display:flex;align-items:flex-end;justify-content:center}
+.scrim{position:fixed;inset:0 0 calc(0px - var(--gap)) 0;z-index:60;background:rgba(10,12,16,.5);display:flex;align-items:flex-end;justify-content:center}
 .sheet{background:var(--surface);width:100%;max-width:520px;border-radius:18px 18px 0 0;padding:18px max(16px,env(safe-area-inset-right,0px)) calc(18px + env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-left,0px));max-height:88vh;overflow-y:auto;display:flex;flex-direction:column;gap:14px}
 .kv{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
 .kv div{background:var(--surface-2);border-radius:10px;padding:10px}
@@ -191,7 +190,7 @@ select.inp{appearance:none;background-image:linear-gradient(45deg,transparent 50
 .chart .goalband{fill:var(--plate-g);opacity:.12}
 .chart .goaltext{fill:var(--plate-g)}
 .empty{padding:22px 16px;text-align:center;color:var(--muted);font-size:14px}
-.toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(80px + var(--bot));z-index:80;background:var(--fg);color:var(--bg);padding:10px 16px;border-radius:999px;font-size:14px;font-weight:600}
+.toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(80px + var(--bot) - var(--gap));z-index:80;background:var(--fg);color:var(--bg);padding:10px 16px;border-radius:999px;font-size:14px;font-weight:600}
 @media (max-width:380px){.picker .pick .s{display:none}.set{grid-template-columns:18px 1fr 1fr 44px;gap:6px}.step{grid-template-columns:28px 1fr 28px}}
 @media (prefers-reduced-motion:no-preference){.ex,.pick,.btn,.check{transition:background-color .15s,opacity .15s,transform .1s}.btn:active,.check:active,.pick:active{transform:scale(.97)}}
 </style>
@@ -256,7 +255,7 @@ const S={
   active:LS.get("gym.active",null),
   db:null, dbState:"connecting",
   progEx:LS.get("gym.progEx",BENCH),
-  rest:null, openHist:null, pick:null, layerOpen:!!LS.get("gym.active",null),
+  rest:null, openHist:null, diag:false, pick:null, layerOpen:!!LS.get("gym.active",null),
 };
 let db=null;
 async function connect(){
@@ -421,8 +420,19 @@ function vToday(){
     <div class="ticks num"><span>0</span><span>50</span><span>100 кг</span></div>
     <div class="muted" style="font-size:13px">${bb?`Расчётный максимум на 1 раз по лучшему подходу ${fmtKg(bb.w)}×${bb.r} (${fdate(bb.date)}). До цели ${fmtKg(Math.max(0,Math.round((GOAL_BENCH-bb.v)*2)/2))} кг.`:"Появится после первой тренировки с жимом лёжа."}</div>
   </div>
-  <div class="muted num" style="text-align:center;font-size:11px">версия 4 · ${S.workouts.length?"данные на телефоне":"данных пока нет"}<br>${diag()}</div>
+  <div class="muted num" style="text-align:center;font-size:11px"><span data-act="diag">версия 5 · ${S.workouts.length?"данные на телефоне":"данных пока нет"}</span>${S.diag?"<br>"+diag():""}</div>
   </div>`;
+}
+function insetTop(){
+  try{const d=document.createElement("div");d.style.cssText="position:fixed;visibility:hidden;padding-top:env(safe-area-inset-top,0px)";document.body.appendChild(d);const t=Math.round(parseFloat(getComputedStyle(d).paddingTop)||0);d.remove();return t}catch(e){return 0}
+}
+/* iOS в режиме приложения: innerHeight меньше экрана на высоту выреза, и fixed bottom:0 заканчивается выше низа экрана. Опускаем такие элементы на эту разницу. */
+function fixGap(){
+  let g=0;
+  try{const t=insetTop(),diff=screen.height-innerHeight;
+    if(navigator.standalone&&t>20&&innerHeight>innerWidth&&diff>0&&Math.abs(diff-t)<=3)g=diff;
+  }catch(e){}
+  document.documentElement.style.setProperty("--gap",g+"px");
 }
 function diag(){
   try{const d=document.createElement("div");d.style.cssText="position:fixed;visibility:hidden;padding:env(safe-area-inset-top,0px) 0 env(safe-area-inset-bottom,0px) 0";document.body.appendChild(d);
@@ -639,6 +649,7 @@ document.addEventListener("click",async ev=>{
     case "hist-del":showHist(t.dataset.id,true);break;
     case "hist-del-yes":await deleteWorkout(t.dataset.id);closeSheet();render();toast("Тренировка удалена");break;
     case "backup":doBackup();break;
+    case "diag":S.diag=!S.diag;render();break;
     case "bw-del":await deleteBody(t.dataset.d);render();break;
   }
 });
@@ -656,6 +667,8 @@ document.addEventListener("submit",async ev=>{
 });
 document.addEventListener("visibilitychange",()=>{if(!document.hidden&&S.active&&$(".layer"))wake(true)});
 
+fixGap();
+addEventListener("resize",fixGap);addEventListener("orientationchange",()=>setTimeout(fixGap,300));
 render();
 connect();
 if("serviceWorker" in navigator){
