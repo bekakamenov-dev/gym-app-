@@ -420,6 +420,7 @@ function vToday(){
     <div class="ticks num"><span>0</span><span>50</span><span>100 кг</span></div>
     <div class="muted" style="font-size:13px">${bb?`Расчётный максимум на 1 раз по лучшему подходу ${fmtKg(bb.w)}×${bb.r} (${fdate(bb.date)}). До цели ${fmtKg(Math.max(0,Math.round((GOAL_BENCH-bb.v)*2)/2))} кг.`:"Появится после первой тренировки с жимом лёжа."}</div>
   </div>
+  <div class="muted num" style="text-align:center;font-size:11px">версия 3 · ${S.workouts.length?"данные на телефоне":"данных пока нет"}</div>
   </div>`;
 }
 function vHistory(){
