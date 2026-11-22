@@ -1,6 +1,6 @@
 // Кэш для работы без интернета в зале. При изменении файлов увеличь номер версии.
-const CACHE = "zal-v9";
-const FILES = ["./", "index.html", "manifest.webmanifest", "icon-180.png", "icon-192.png", "icon-512.png"];
+const CACHE = "zal-v10";
+const FILES = ["./", "index.html", "manifest.webmanifest", "icon-180.png", "icon-192.png", "icon-512.png", "supabase.js"];
 self.addEventListener("install", e => {
   e.waitUntil(caches.open(CACHE).then(c => Promise.all(FILES.map(f => fetch(new Request(f, { cache: "reload" })).then(r => c.put(f, r))))));
   self.skipWaiting();
