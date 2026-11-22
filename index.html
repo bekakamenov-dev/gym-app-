@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>Зал Бексултана</title>
+<title>Зал</title>
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Зал">
@@ -66,6 +66,7 @@ h2{font-family:var(--f-body);font-weight:700;font-size:17px}
 .row{display:flex;align-items:center;gap:10px}
 .between{justify-content:space-between}
 .top{display:flex;justify-content:space-between;align-items:flex-end;gap:12px;padding-block:10px 8px}
+.avatar{width:42px;height:42px;border-radius:50%;background:var(--surface);border:1.5px solid var(--line);font-weight:800;font-size:18px;color:var(--fg);flex:none}
 .top > .muted, .top > .num{font-family:var(--f-num);font-weight:700;font-size:20px}
 .card{background:var(--surface);border-radius:var(--r);padding:16px}
 .section-title{display:flex;justify-content:space-between;align-items:baseline;margin-top:12px}
@@ -316,6 +317,7 @@ select.inp{appearance:none;font-weight:600;background-image:linear-gradient(45de
 {"id": "crunch", "n": "Пресс: скручивания лёжа", "g": "abs", "eq": "body", "rest": 60, "w0": 0, "yt": "j6KuyPR0zrQ"}
 ]
 </script>
+<script src="supabase.js"></script>
 <script>
 /* ---------- база упражнений (этап 1 ТЗ «Зал») ----------
    id постоянные (латиницей): по ним ищется история весов. На этапе 2 этот же JSON уйдёт в облако.
@@ -424,13 +426,153 @@ const S={
 function persist(k,v){if(!LS.set(k,v)){S.dbState="local";toast("Не удалось сохранить на телефоне")}}
 function saveWorkout(w){
   S.workouts=[w,...S.workouts.filter(x=>x.id!==w.id)].sort((a,b)=>b.startedAt.localeCompare(a.startedAt));
-  persist("zal_workouts",S.workouts);
+  persist("zal_workouts",S.workouts);enqueue({k:"w",id:w.id});
 }
-function deleteWorkout(id){S.workouts=S.workouts.filter(x=>x.id!==id);persist("zal_workouts",S.workouts)}
-function saveBody(date,kg){S.body=[...S.body.filter(x=>x.date!==date),{id:date,date,kg}].sort((a,b)=>a.date.localeCompare(b.date));persist("zal_body",S.body)}
-function deleteBody(date){S.body=S.body.filter(x=>x.date!==date);persist("zal_body",S.body)}
+function deleteWorkout(id){S.workouts=S.workouts.filter(x=>x.id!==id);persist("zal_workouts",S.workouts);enqueue({k:"w",id})}
+function saveBody(date,kg){S.body=[...S.body.filter(x=>x.date!==date),{id:date,date,kg}].sort((a,b)=>a.date.localeCompare(b.date));persist("zal_body",S.body);enqueue({k:"b",id:date})}
+function deleteBody(date){S.body=S.body.filter(x=>x.date!==date);persist("zal_body",S.body);enqueue({k:"b",id:date})}
 const saveActive=()=>{ if(S.active) LS.set("zal_active",S.active); else LS.del("zal_active"); };
-const saveProgram=()=>persist("zal_program",S.program);
+const saveProgram=()=>{persist("zal_program",S.program);enqueue({k:"p"})};
+
+/* ---------- облако (этап 2 ТЗ «Зал»): Supabase, вход через Google, список почт семьи ----------
+   Телефон остаётся главным хранилищем: всё пишется сначала в localStorage, потом очередь zal_queue
+   отправляется в облако, когда есть сеть. Ключ ниже публичный (publishable): данные защищены
+   правилами RLS в базе: читать и писать могут только почты из таблицы allowed_emails. */
+const SB_URL="https://qohiiyihgunufvephgsk.supabase.co";
+const SB_KEY="sb_publishable_B8iiLocA9IcAwzibcNEjiQ_vjUZvAyG";
+const sb=(window.supabase&&window.supabase.createClient)?window.supabase.createClient(SB_URL,SB_KEY,{auth:{flowType:"pkce",detectSessionInUrl:true,persistSession:true,autoRefreshToken:true,storageKey:"zal_sb_auth"}}):null;
+const C={user:null,allowed:null,admin:false,state:sb?"out":"nolib",busy:false,family:null,lastSync:LS.get("zal_lastSync",null)};
+function enqueue(op){const q=LS.get("zal_queue",[]);const key=op.k+":"+(op.id||"");if(!q.some(o=>o.k+":"+(o.id||"")===key))q.push(op);LS.set("zal_queue",q);scheduleSync()}
+let syncTimer=null;function scheduleSync(ms=1500){clearTimeout(syncTimer);syncTimer=setTimeout(syncNow,ms)}
+function cloudLabel(){return {nolib:"облако недоступно",out:"вход не выполнен",denied:"почты нет в списке",offline:"нет сети, сохранится позже",sync:"синхронизация…",ok:"сохранено в облаке",err:"ошибка облака, повторю позже"}[C.state]||""}
+async function flushQueue(uid){
+  let q=LS.get("zal_queue",[]);
+  for(const op of q.slice()){
+    let res;
+    if(op.k==="w"){const w=S.workouts.find(x=>x.id===op.id);
+      res=await sb.from("workouts").upsert(w?{user_id:uid,id:w.id,started_at:w.startedAt,data:w,deleted:false,updated_at:new Date().toISOString()}:{user_id:uid,id:op.id,data:{},deleted:true,updated_at:new Date().toISOString()});}
+    else if(op.k==="b"){const b=S.body.find(x=>x.date===op.id);
+      res=await sb.from("body").upsert(b?{user_id:uid,date:b.date,kg:b.kg,deleted:false,updated_at:new Date().toISOString()}:{user_id:uid,date:op.id,kg:null,deleted:true,updated_at:new Date().toISOString()});}
+    else if(op.k==="p"){res=await sb.from("programs").upsert({user_id:uid,data:S.program,updated_at:new Date().toISOString()});}
+    else res={};
+    if(res.error)throw res.error;
+    q=LS.get("zal_queue",[]).filter(o=>!(o.k===op.k&&(o.id||"")===(op.id||"")));LS.set("zal_queue",q);
+  }
+}
+async function pullOwn(uid){
+  const pending=new Set(LS.get("zal_queue",[]).map(o=>o.k+":"+(o.id||"")));
+  const [w,b,p]=await Promise.all([
+    sb.from("workouts").select("id,data,deleted").eq("user_id",uid),
+    sb.from("body").select("date,kg,deleted").eq("user_id",uid),
+    sb.from("programs").select("data").eq("user_id",uid).maybeSingle()]);
+  if(w.error||b.error||p.error)throw (w.error||b.error||p.error);
+  const W=new Map(S.workouts.map(x=>[x.id,x]));
+  for(const r of w.data){if(pending.has("w:"+r.id))continue;if(r.deleted)W.delete(r.id);else if(r.data&&r.data.startedAt)W.set(r.id,normWorkout(r.data))}
+  S.workouts=[...W.values()].sort((a,b)=>b.startedAt.localeCompare(a.startedAt));
+  const B=new Map(S.body.map(x=>[x.date,x]));
+  for(const r of b.data){if(pending.has("b:"+r.date))continue;if(r.deleted)B.delete(r.date);else B.set(r.date,{id:r.date,date:r.date,kg:+r.kg})}
+  S.body=[...B.values()].sort((a,b)=>a.date.localeCompare(b.date));
+  if(p.data&&p.data.data&&!pending.has("p:")&&ORDER.every(k=>p.data.data[k]&&Array.isArray(p.data.data[k].ex)))S.program=p.data.data;
+  LS.set("zal_workouts",S.workouts);LS.set("zal_body",S.body);LS.set("zal_program",S.program);
+}
+/* Данные на телефоне привязываются к первому вошедшему аккаунту (zal_owner): так история Бексултана
+   уходит в его профиль. Если на этом телефоне войдёт другой человек, данные прежнего владельца
+   откладываются в zal_stash_<id> (не удаляются), а на экран загружаются данные нового. */
+function bindOwner(uid){
+  const owner=LS.get("zal_owner",null);
+  if(owner===uid)return true;
+  if(!owner){
+    if(!S.workouts.length&&!S.body.length){LS.set("zal_owner",uid);return true}
+    sheet(`<h1 style="font-size:20px">Чьи это тренировки?</h1><div class="muted">На этом iPhone ${S.workouts.length} трен. и ${S.body.length} записей веса. Перенести их в облако в аккаунт <b>${esc(C.user.email)}</b>?</div>
+    <button class="btn primary full" data-act="own-yes">Да, это мои, перенести</button><button class="btn ghost full" data-act="logout">Нет, войти другим аккаунтом</button>`);
+    return false}
+  LS.set("zal_stash_"+owner,{at:new Date().toISOString(),workouts:S.workouts,body:S.body,program:S.program,queue:LS.get("zal_queue",[])});
+  LS.set("zal_owner",uid);LS.set("zal_queue",[]);S.workouts=[];S.body=[];S.program=clone(PROGRAM_DEFAULT);
+  LS.set("zal_workouts",[]);LS.set("zal_body",[]);LS.del("zal_program");toast("Загружаю данные "+(C.user.email||""));
+  return true;
+}
+async function syncNow(){
+  if(!sb||!C.user||C.allowed!==true||C.busy||LS.get("zal_owner",null)!==C.user.id)return;
+  if(!navigator.onLine){C.state="offline";render();return}
+  C.busy=true;C.state="sync";
+  try{await flushQueue(C.user.id);await pullOwn(C.user.id);await flushQueue(C.user.id);
+    C.state="ok";C.lastSync=new Date().toISOString();LS.set("zal_lastSync",C.lastSync);
+  }catch(e){C.state=navigator.onLine?"err":"offline";scheduleSync(30000)}
+  C.busy=false;if(!$("#modal").innerHTML&&!(S.active&&S.layerOpen))render();
+}
+async function onSession(session){
+  C.user=session?session.user:null;
+  if(!C.user){C.allowed=null;C.admin=false;C.state=sb?"out":"nolib";render();return}
+  const email=(C.user.email||"").toLowerCase();
+  const {data,error}=await sb.from("allowed_emails").select("email,name,is_admin").eq("email",email).maybeSingle();
+  if(error){C.state=navigator.onLine?"err":"offline";render();scheduleSync(30000);return}
+  if(!data){C.allowed=false;C.state="denied";render();
+    sheet(`<h1 style="font-size:20px">Нет доступа</h1><div class="muted">Почты <b>${esc(email)}</b> нет в списке семьи. Попроси Бексултана добавить её и войди снова. Данные на этом телефоне не тронуты.</div><button class="btn primary full" data-act="logout">Понятно</button>`);return}
+  C.allowed=true;C.admin=!!data.is_admin;
+  const meta=C.user.user_metadata||{};
+  const name=data.name||meta.given_name||(meta.full_name||meta.name||"").split(" ")[0]||"";
+  if(name)LS.set("zal_name",name);
+  if(!bindOwner(C.user.id)){render();return}
+  sb.from("profiles").upsert({user_id:C.user.id,email,name:meta.full_name||meta.name||name,avatar_url:meta.avatar_url||meta.picture||null,updated_at:new Date().toISOString()}).then(()=>{});
+  render();syncNow();
+}
+async function login(){
+  if(!sb){toast("Облако не загрузилось. Проверь интернет");return}
+  if(!navigator.onLine){toast("Нужен интернет для входа");return}
+  if(S.active)saveActive();
+  const {error}=await sb.auth.signInWithOAuth({provider:"google",options:{redirectTo:location.origin+location.pathname,queryParams:{prompt:"select_account"}}});
+  if(error)toast("Не удалось открыть вход Google");
+}
+async function logout(){closeSheet();if(sb)await sb.auth.signOut().catch(()=>{});C.user=null;C.allowed=null;C.admin=false;C.state=sb?"out":"nolib";render();}
+function accountBtn(){
+  if(!sb)return "";
+  if(!C.user)return `<button class="btn primary sm" data-act="login">Войти</button>`;
+  const n=LS.get("zal_name","")||C.user.email;return `<button class="avatar" data-act="account" aria-label="Аккаунт">${esc((n[0]||"?").toUpperCase())}</button>`;
+}
+function cloudCard(){
+  if(!sb||C.user||S.active)return "";
+  return `<div class="card stack"><h2>Сохрани историю в облаке</h2><div class="muted" style="font-size:13px">Войди через Google: тренировки будут храниться не только в этом iPhone, и семья сможет пользоваться приложением.</div><button class="btn primary full" data-act="login">Войти через Google</button></div>`;
+}
+async function showAccount(){
+  const q=LS.get("zal_queue",[]).length;
+  sheet(`<h1 style="font-size:20px">${esc(LS.get("zal_name","")||"Аккаунт")}</h1>
+  <div class="muted">${esc(C.user?C.user.email:"")}</div>
+  <div class="banner">Облако: ${cloudLabel()}${q?" · ждут отправки: "+q:""}${C.lastSync?"<br>Последняя синхронизация: "+fdateL(C.lastSync)+" "+new Date(C.lastSync).toTimeString().slice(0,5):""}</div>
+  <button class="btn ghost full" data-act="sync">Синхронизировать сейчас</button>
+  ${C.admin?`<div class="section-title"><h2>Семья: кто может входить</h2></div><div id="famList" class="list"><div class="empty">Загружаю…</div></div>
+  <form id="famForm" class="stack"><div class="field"><label for="famEmail">Почта Google</label><input id="famEmail" type="email" inputmode="email" autocomplete="off" autocapitalize="none" placeholder="name@gmail.com" required></div>
+  <div class="field"><label for="famName">Как обращаться</label><input id="famName" type="text" placeholder="Папа"></div>
+  <button class="btn primary full" type="submit">Добавить почту</button></form>`:""}
+  <button class="btn danger full" data-act="logout">Выйти</button>`);
+  if(C.admin)loadFamily();
+}
+async function loadFamily(){
+  const el=$("#famList");if(!el)return;
+  const {data,error}=await sb.from("allowed_emails").select("email,name,is_admin").order("added_at");
+  if(error){el.innerHTML=`<div class="empty">Не загрузилось: ${navigator.onLine?"ошибка":"нет сети"}</div>`;return}
+  const me=(C.user.email||"").toLowerCase();
+  el.innerHTML=data.map(r=>`<div class="item"><span class="grow"><span class="t">${esc(r.name||"—")}</span><br><span class="s">${esc(r.email)}${r.is_admin?" · админ":""}</span></span>${r.email===me?"":`<button class="btn danger sm" data-act="fam-del" data-email="${esc(r.email)}">Убрать</button>`}</div>`).join("");
+}
+async function addFamily(email,name){
+  email=email.trim().toLowerCase();
+  if(!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)){toast("Проверь почту");return}
+  const {error}=await sb.from("allowed_emails").insert({email,name:name.trim()||null});
+  if(error){toast(error.code==="23505"?"Эта почта уже в списке":"Не удалось добавить");return}
+  toast("Добавлено: "+email);$("#famEmail").value="";$("#famName").value="";loadFamily();
+}
+async function delFamily(email){
+  const {error}=await sb.from("allowed_emails").delete().eq("email",email);
+  if(error){toast("Не удалось убрать");return}toast("Убрано: "+email);loadFamily();
+}
+if(sb){
+  sb.auth.onAuthStateChange((ev,session)=>{
+    if(location.search.includes("code=")||location.hash.includes("access_token"))history.replaceState(null,"",location.pathname);
+    if(ev==="INITIAL_SESSION"||ev==="SIGNED_IN"||ev==="SIGNED_OUT")setTimeout(()=>onSession(session),0);
+    else if(ev==="TOKEN_REFRESHED"&&session)C.user=session.user;
+  });
+  addEventListener("online",()=>scheduleSync(500));
+  document.addEventListener("visibilitychange",()=>{if(!document.hidden)scheduleSync(800)});
+}
 try{navigator.storage&&navigator.storage.persist&&navigator.storage.persist()}catch(e){}
 
 /* ---------- helpers ---------- */
@@ -606,7 +748,7 @@ function vToday(){
   const bb=bestBench();
   const pct=bb?Math.min(100,bb.v/GOAL_BENCH*100):0;
   return `
-  <div class="top"><div><div class="eyebrow">${DOW[d.getDay()]}, ${d.getDate()} ${MON[d.getMonth()]}</div><h1>Привет, Бексултан</h1></div></div>
+  <div class="top"><div><div class="eyebrow">${DOW[d.getDay()]}, ${d.getDate()} ${MON[d.getMonth()]}</div><h1>${LS.get("zal_name","")?"Привет, "+esc(LS.get("zal_name","")):"Привет"}</h1></div>${accountBtn()}</div>
   <div class="stack">
   ${storeNote()}
   ${S.active?`<div class="card row between"><div><div class="eyebrow">Идёт тренировка</div><div style="font-weight:600">${S.program[S.active.prog].title}</div></div><button class="btn primary sm" data-act="resume">Продолжить</button></div>`:""}
@@ -631,7 +773,8 @@ function vToday(){
     <div class="ticks num"><span>0</span><span>50</span><span>100 кг</span></div>
     <div class="muted" style="font-size:13px">${bb?`Расчётный максимум на 1 раз по лучшему подходу ${fmtKg(bb.w)}×${bb.r} (${fdate(bb.date)}). До цели ${fmtKg(Math.max(0,Math.round((GOAL_BENCH-bb.v)*2)/2))} кг.`:"Появится после первой тренировки с жимом лёжа."}</div>
   </div>
-  <div class="muted num" style="text-align:center;font-size:11px"><span data-act="diag">версия 9 · ${S.workouts.length?"данные на телефоне":"данных пока нет"}</span>${S.diag?"<br>"+diag():""}</div>
+  ${cloudCard()}
+  <div class="muted num" style="text-align:center;font-size:11px"><span data-act="diag">версия 10 · ${C.user?cloudLabel():S.workouts.length?"данные только на телефоне":"данных пока нет"}</span>${S.diag?"<br>"+diag():""}</div>
   </div>`;
 }
 function diag(){
@@ -898,6 +1041,12 @@ document.addEventListener("click",async ev=>{
     case "backup":doBackup();break;
     case "diag":S.diag=!S.diag;render();break;
     case "bw-del":deleteBody(t.dataset.d);render();break;
+    case "login":closeSheet();login();break;
+    case "logout":logout();break;
+    case "own-yes":LS.set("zal_owner",C.user.id);S.workouts.forEach(w=>enqueue({k:"w",id:w.id}));S.body.forEach(b=>enqueue({k:"b",id:b.date}));if(LS.get("zal_program",null))enqueue({k:"p"});closeSheet();render();syncNow().then(()=>toast("Перенесено в облако: "+S.workouts.length+" трен."));break;
+    case "account":showAccount();break;
+    case "sync":syncNow().then(()=>{if($("#famList")||$(".sheet"))showAccount()});break;
+    case "fam-del":if(t.dataset.confirm){delFamily(t.dataset.email)}else{t.dataset.confirm="1";t.textContent="Точно?"}break;
   }
 });
 document.addEventListener("change",ev=>{
@@ -907,6 +1056,7 @@ document.addEventListener("change",ev=>{
   if(el.id==="progSel"){S.progEx=el.value;LS.set("zal_progEx",el.value);render()}
 });
 document.addEventListener("submit",ev=>{
+  if(ev.target.id==="famForm"){ev.preventDefault();addFamily($("#famEmail").value,$("#famName").value);return}
   if(ev.target.id!=="bwForm")return;ev.preventDefault();
   const kg=parseFloat(String($("#bwKg").value).replace(",","."));const date=$("#bwDate").value||today();
   if(isNaN(kg)||kg<30||kg>250){toast("Введи вес от 30 до 250 кг");return}
