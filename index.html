@@ -324,7 +324,7 @@ select.inp{appearance:none;font-weight:600;background-image:linear-gradient(45de
    w0: вес для первого раза, yt: id видео «Как делать» на YouTube. */
 const EXERCISES=JSON.parse(document.getElementById("exercise-db").textContent);
 const GROUPS={legs:{n:"Ноги",big:true},glutes:{n:"Ягодицы",big:true},back:{n:"Спина",big:true},chest:{n:"Грудь",big:true},shoulders:{n:"Плечи",big:false},biceps:{n:"Бицепс",big:false},triceps:{n:"Трицепс",big:false},abs:{n:"Пресс",big:false}};
-// шаг прибавки: штанга и блок +2,5 кг, гантели +1 кг, тренажёр +2,5 кг (минимальный шаг), свой вес: доп. отягощение +2,5
+// шаг прибавки: штанга и блок +2,5 кг, гантели +1 кг до 10 кг и +2 кг дальше (см. stepUp), тренажёр +2,5 кг (минимальный шаг), свой вес: доп. отягощение +2,5
 const STEP={bar:2.5,cable:2.5,machine:2.5,other:2.5,dumb:1,bw:2.5,body:0};
 const EXMAP=Object.fromEntries(EXERCISES.map(e=>[e.id,{...e,step:e.step??STEP[e.eq]??2.5}]));
 // старое название из истории (версии 1–7) → id
@@ -338,6 +338,11 @@ const LEGACY={
   "Пресс: скручивания на блоке":"cable_crunch","Жим ногами":"leg_press","Тяга штанги в наклоне":"barbell_row",
   "Жим штанги стоя":"overhead_press","Сгибания рук со штангой":"barbell_curl","Махи гантелями в наклоне":"rear_delt_raise",
 };
+// Шаг веса. Гантели в зале: до 10 кг через 1 кг, от 10 кг через 2 кг (10, 12, 14…).
+const r2=v=>Math.round(v*100)/100;
+function stepUp(eq,w,step){if(eq==="dumb")return w<10?Math.floor(w+1e-9)+1:Math.floor(w/2+1e-9)*2+2;return r2(w+(step||2.5))}
+function stepDown(eq,w,step){if(eq==="dumb")return Math.max(0,w<=10?Math.ceil(w-1e-9)-1:Math.ceil(w/2-1e-9)*2-2);return Math.max(0,r2(w-(step||2.5)))}
+function ceilGrid(eq,w,step){if(eq==="dumb")return w<=10?Math.ceil(w-1e-9):Math.ceil(w/2-1e-9)*2;return r2(Math.ceil(w/step-1e-9)*step)}
 const BYNAME=Object.fromEntries(EXERCISES.map(e=>[e.n,e.id]));
 const idFor=n=>LEGACY[n]||BYNAME[n]||("custom:"+n);
 function exById(id){return EXMAP[id]||{id,n:String(id).replace(/^custom:/,""),g:null,eq:"other",step:2.5,rest:90,w0:0,yt:null}}
@@ -480,14 +485,14 @@ function suggest(def){
   const step=def.step||0;
   const failed=s=>s.sets.some(x=>same(x.w,s.top)&&x.r<def.r[0]);
   if(step>0&&W>0&&ses.length>=2&&same(ses[1].top,W)&&failed(ses[0])&&failed(ses[1])){
-    let w=Math.round(Math.ceil(W*0.95/step-1e-9)*step*100)/100;
-    if(w>=W)w=Math.round((W-step)*100)/100;
+    let w=ceilGrid(def.eq,W*0.95,step);
+    if(w>=W)w=stepDown(def.eq,W,step);
     return {w:Math.max(0,w),r:def.r[0],hint:"down",prev:W};
   }
   const allTop=topSets.length>=def.s&&topSets.every(s=>s.r>=def.r[1]);
   if(allTop&&step>0){
     const d=daysSince(since);
-    if(d>=PROG_DAYS) return {w:Math.round((W+step)*100)/100,r:def.r[0],hint:"up",prev:W};
+    if(d>=PROG_DAYS){const w=stepUp(def.eq,W,step);return {w,r:def.r[0],hint:"up",prev:W,inc:r2(w-W)}}
     return {w:W,r:def.r[1],hint:"wait",left:PROG_DAYS-d,prev:W};
   }
   return {w:W,r,hint:"",prev:W};
@@ -501,7 +506,7 @@ function lastBest(x){let b=0;for(const w of S.workouts)for(const e of w.exercise
 /* ---------- старт / финиш ---------- */
 function buildEx(slot,prog){
   const d={...slotDef(slot),prog},sg=suggest(d);
-  return {x:d.x,n:d.n,s:d.s,r:d.r,rest:d.rest,step:d.step,eq:d.eq,note:d.note,hint:sg.hint,prev:sg.prev??null,left:sg.left??null,
+  return {x:d.x,n:d.n,s:d.s,r:d.r,rest:d.rest,step:d.step,eq:d.eq,note:d.note,hint:sg.hint,prev:sg.prev??null,left:sg.left??null,inc:sg.inc??null,
     sets:Array.from({length:d.s},()=>({w:sg.w,r:sg.r,done:false}))};
 }
 function startWorkout(k){
@@ -626,7 +631,7 @@ function vToday(){
     <div class="ticks num"><span>0</span><span>50</span><span>100 кг</span></div>
     <div class="muted" style="font-size:13px">${bb?`Расчётный максимум на 1 раз по лучшему подходу ${fmtKg(bb.w)}×${bb.r} (${fdate(bb.date)}). До цели ${fmtKg(Math.max(0,Math.round((GOAL_BENCH-bb.v)*2)/2))} кг.`:"Появится после первой тренировки с жимом лёжа."}</div>
   </div>
-  <div class="muted num" style="text-align:center;font-size:11px"><span data-act="diag">версия 8 · ${S.workouts.length?"данные на телефоне":"данных пока нет"}</span>${S.diag?"<br>"+diag():""}</div>
+  <div class="muted num" style="text-align:center;font-size:11px"><span data-act="diag">версия 9 · ${S.workouts.length?"данные на телефоне":"данных пока нет"}</span>${S.diag?"<br>"+diag():""}</div>
   </div>`;
 }
 function diag(){
@@ -746,7 +751,7 @@ function lineChart(pts,opt={}){
 const ICON_PLAY='<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M8 5.5v13l10.5-6.5z"/></svg>';
 const ICON_SWAP='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 8h13l-3.5-3.5M20 16H7l3.5 3.5"/></svg>';
 function hintFor(e){
-  if(e.hint==="up")return `<span class="hint up">↑ +${fmtKg(e.step)} кг</span>`;
+  if(e.hint==="up")return `<span class="hint up">↑ +${fmtKg(e.inc??e.step)} кг</span>`;
   if(e.hint==="down")return `<span class="hint down">↓ −5%, было ${fmtKg(e.prev)}</span>`;
   if(e.hint==="wait")return `<span class="hint">держим ${fmtKg(e.prev)} ещё ${e.left} ${dn(e.left)}</span>`;
   if(e.hint==="first")return isBodyEq(e.eq)?"":`<span class="hint">подбери вес</span>`;
@@ -784,7 +789,7 @@ function renderLayer(){
 }
 function bump(i,j,f,dir){
   const e=S.active.exercises[i],s=e.sets[j];
-  if(f==="w"){const st=e.step||2.5;s.w=Math.max(0,Math.round((+s.w+dir*st)*100)/100)}else{s.r=Math.max(0,+s.r+dir)}
+  if(f==="w"){s.w=dir>0?stepUp(e.eq,+s.w,e.step||2.5):stepDown(e.eq,+s.w,e.step||2.5)}else{s.r=Math.max(0,+s.r+dir)}
   if(f==="w")e.sets.forEach((x,k)=>{if(k>j&&!x.done)x.w=s.w});
   saveActive();renderLayer();
 }
