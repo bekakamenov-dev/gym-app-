@@ -774,7 +774,7 @@ function vToday(){
     <div class="muted" style="font-size:13px">${bb?`Расчётный максимум на 1 раз по лучшему подходу ${fmtKg(bb.w)}×${bb.r} (${fdate(bb.date)}). До цели ${fmtKg(Math.max(0,Math.round((GOAL_BENCH-bb.v)*2)/2))} кг.`:"Появится после первой тренировки с жимом лёжа."}</div>
   </div>
   ${cloudCard()}
-  <div class="muted num" style="text-align:center;font-size:11px"><span data-act="diag">версия 10 · ${C.user?cloudLabel():S.workouts.length?"данные только на телефоне":"данных пока нет"}</span>${S.diag?"<br>"+diag():""}</div>
+  <div class="muted num" style="text-align:center;font-size:11px"><span data-act="diag">версия 11 · ${C.user?cloudLabel():S.workouts.length?"данные только на телефоне":"данных пока нет"}</span>${S.diag?"<br>"+diag():""}</div>
   </div>`;
 }
 function diag(){
@@ -798,7 +798,7 @@ function vHistory(){
         <span class="chev">›</span></button>`}).join("")}</div>`).join("")}${backupCard()}</div>`;
 }
 function backupCard(){
-  return `<div class="card stack"><h2>Резервная копия</h2><div class="muted" style="font-size:13px">Данные хранятся в этом iPhone. Раз в неделю сохраняй копию в «Файлы» или отправляй в Telegram. Из копии всё восстанавливается.</div>
+  return `<div class="card stack"><h2>Резервная копия</h2><div class="muted" style="font-size:13px">${C.user?"Данные хранятся в этом iPhone и в облаке.":"Данные хранятся только в этом iPhone."} Раз в неделю сохраняй копию в «Файлы» или отправляй в Telegram. Из копии всё восстанавливается${C.user?" и уходит в облако":""}.</div>
   <div class="row"><button class="btn primary sm" data-act="backup">Сохранить копию</button><label class="btn ghost sm" for="restoreFile">Загрузить из файла</label><input type="file" id="restoreFile" accept="application/json,.json" hidden></div></div>`;
 }
 async function doBackup(){
@@ -815,7 +815,9 @@ async function doRestore(file){
     const byD=new Map(S.body.map(b=>[b.date,b]));j.body.forEach(b=>byD.set(b.date,b));
     S.body=[...byD.values()].sort((a,b)=>a.date.localeCompare(b.date));
     if(j.program&&ORDER.every(k=>j.program[k]&&Array.isArray(j.program[k].ex))){S.program=j.program;saveProgram()}
-    persist("zal_workouts",S.workouts);persist("zal_body",S.body);render();toast("Восстановлено: "+j.workouts.length+" трен.");
+    persist("zal_workouts",S.workouts);persist("zal_body",S.body);
+    j.workouts.forEach(w=>enqueue({k:"w",id:w.id}));j.body.forEach(b=>enqueue({k:"b",id:b.date}));
+    render();toast("Восстановлено: "+j.workouts.length+" трен."+(C.user?" Отправляю в облако":""));
   }catch(e){toast("Этот файл не похож на копию приложения")}
 }
 function exName(x){const e=EXMAP[x];if(e)return e.n;for(const w of S.workouts)for(const ex of w.exercises||[])if(ex.x===x)return ex.n;return exById(x).n}
