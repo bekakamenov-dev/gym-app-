@@ -263,6 +263,26 @@ select.inp{appearance:none;font-weight:600;background-image:linear-gradient(45de
 .stepper button{height:100%;font-size:22px;color:var(--muted)}
 .stepper b{text-align:center;font-family:var(--f-num);font-size:26px}
 .grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+/* v13: награды, окно «Красава», медали */
+.awards{display:flex;flex-direction:column;gap:10px;width:100%;text-align:left}
+.awards .t{font-weight:800;font-size:18px;line-height:1.1}
+.lvl{display:grid;place-items:center;width:52px;height:52px;border-radius:50%;background:var(--plate-b);color:#fff;font-size:30px;flex:none;box-shadow:inset 0 0 0 3px color-mix(in srgb,#000 22%,var(--plate-b)),inset 0 0 0 5px color-mix(in srgb,#fff 18%,var(--plate-b))}
+.medals{display:grid;grid-template-columns:repeat(3,1fr);gap:14px 8px}
+.mcell{display:flex;flex-direction:column;align-items:center;text-align:center;gap:4px;min-width:0}
+.mcell .mn{font-size:13px;font-weight:700;line-height:1.15}
+.mcell .ms{font-size:11.5px;color:var(--muted);line-height:1.2}
+.mcell.lock .mn{color:var(--muted)}
+.medal{--c:var(--plate-a);display:grid;place-items:center;width:54px;height:54px;border-radius:50%;background:var(--c);color:#fff;font-family:var(--f-display);font-weight:800;font-size:22px;line-height:1;flex:none;box-shadow:inset 0 0 0 3px color-mix(in srgb,#000 22%,var(--c)),inset 0 0 0 6px color-mix(in srgb,#fff 22%,var(--c))}
+.medal.lg{width:60px;height:60px;font-size:24px}
+.medal.mA{--c:var(--plate-a)}.medal.mB{--c:var(--plate-b)}.medal.mC{--c:var(--plate-c)}.medal.mD{--c:var(--plate-g)}.medal.mS{--c:var(--steel-3)}
+.medal.off{background:var(--surface-2);color:var(--faint);box-shadow:inset 0 0 0 2px var(--line)}
+.phrase{font-size:17px;font-weight:600;color:var(--muted);margin-top:-4px}
+.gain{display:flex;flex-wrap:wrap;gap:6px 14px;font-size:14px;color:var(--muted)}
+.gain .g1{font-weight:800;color:var(--fg)}
+.newm{display:flex;flex-direction:column;gap:10px;background:var(--surface);border-radius:14px;padding:12px}
+.pts summary{cursor:pointer;font-size:14px;font-weight:700;color:var(--muted)}
+.storyimg{width:100%;max-width:300px;margin:0 auto;border-radius:12px;display:block;-webkit-touch-callout:default}
+@media (prefers-reduced-motion:no-preference){.newm .medal{animation:pop .5s ease-out}@keyframes pop{from{transform:scale(.5);opacity:0}to{transform:none;opacity:1}}}
 </style>
 
 </head>
@@ -585,6 +605,7 @@ async function syncNow(){
   if(!navigator.onLine){C.state="offline";render();return}
   C.busy=true;C.state="sync";
   try{await flushQueue(C.user.id);await pullOwn(C.user.id);await flushQueue(C.user.id);
+    await loadWins().catch(()=>{});
     C.state="ok";C.lastSync=new Date().toISOString();LS.set("zal_lastSync",C.lastSync);
   }catch(e){C.state=navigator.onLine?"err":"offline";scheduleSync(30000)}
   C.busy=false;if(!$("#modal").innerHTML&&!(S.active&&S.layerOpen)&&!S.onb)render();
@@ -747,6 +768,124 @@ function bestE1rm(x){let best=null;for(const w of S.workouts)for(const e of w.ex
 function tonnage(w){let t=0;for(const e of w.exercises||[])for(const s of e.sets)if(s.done)t+=s.w*s.r;return t}
 function lastBest(x){let b=0;for(const w of S.workouts)for(const e of w.exercises||[])if(e.x===x)for(const s of e.sets)if(s.done)b=Math.max(b,e1rm(s.w,s.r));return b}
 
+/* ---------- награды (этап 4 ТЗ «Зал») ----------
+   Очки, уровни, медали, рекорды и стрик нигде не хранятся: каждый раз считаются заново из тренировок
+   (так одинаково у всех и пересчитывается по перенесённой истории). Победители месяца берутся из облака (zal_wins). */
+const PTS={workout:100,pr:25,week:50,medal:50};
+const LEVELS=[[0,"Новичок"],[500,"В деле"],[1500,"Регулярный"],[3500,"Крепкий"],[7000,"Силач"]];
+function levelFor(p){
+  if(p<7000){let i=0;LEVELS.forEach(([f],k)=>{if(p>=f)i=k});return {n:i+1,name:LEVELS[i][1],from:LEVELS[i][0],to:LEVELS[i+1][0]}}
+  const x=Math.floor((p-7000)/4000);return {n:5+x,name:"Силач",from:7000+x*4000,to:7000+(x+1)*4000};
+}
+// ic — надпись на медали, c — цвет блина (A красный, B синий, C жёлтый, D зелёный, S сталь)
+const MEDALS=[
+  {id:"w1",n:"Первая тренировка",d:"Сделать первую тренировку",ic:"1",c:"A"},
+  {id:"w10",n:"10 тренировок",d:"10 тренировок или занятий",ic:"10",c:"A"},
+  {id:"w50",n:"50 тренировок",d:"50 тренировок или занятий",ic:"50",c:"A"},
+  {id:"w100",n:"100 тренировок",d:"100 тренировок или занятий",ic:"100",c:"A"},
+  {id:"s4",n:"Стрик 4 недели",d:"4 засчитанные недели подряд",ic:"4н",c:"B"},
+  {id:"s12",n:"Стрик 12 недель",d:"12 засчитанных недель подряд",ic:"12н",c:"B"},
+  {id:"pr1",n:"Первый рекорд",d:"Побить свой лучший результат в упражнении",ic:"PR",c:"C"},
+  {id:"ton",n:"Тонна за раз",d:"10 000 кг тоннажа за одну тренировку",ic:"10т",c:"S"},
+  {id:"goal",n:"Цель достигнута",d:"Дойти до цели по весу тела или рекорду",ic:"✓",c:"D"},
+  {id:"win",n:"Победитель месяца",d:"Больше всех тренировок в семье за месяц",ic:"№1",c:"C"},
+  {id:"grp10",n:"Групповой дух",d:"10 групповых занятий",ic:"Гр",c:"D"},
+];
+const WEEK=7*864e5;
+const prevWeek=ws=>weekStart(ws-864e5);
+// «сила» подхода для рекордов: с весом — расчётный максимум на 1 раз; без веса — повторы (меньше любого веса)
+const setScore=s=>s.w>0?e1rm(s.w,s.r):s.r*0.001;
+let statsCache={key:null,val:null};
+function calcStats(){
+  const g=goals(),per=g.perWeek||3,wins=LS.get("zal_wins",[]);
+  const key=[S.workouts,S.body,JSON.stringify(g),JSON.stringify(wins)];
+  if(statsCache.key&&statsCache.key.every((k,i)=>k===key[i]))return statsCache.val;
+  const ws=[...S.workouts].sort((a,b)=>a.startedAt.localeCompare(b.startedAt));
+  const medals={},best={},prByW={},weekN={},counted=new Map();
+  let n=0,grp=0,prs=0,run=0,bestRun=0;
+  const give=(id,at)=>{if(!medals[id])medals[id]=at};
+  for(const w of ws){
+    n++;if(isGroup(w))grp++;
+    const at=w.startedAt;
+    if(n===1)give("w1",at);if(n===10)give("w10",at);if(n===50)give("w50",at);if(n===100)give("w100",at);
+    if(grp===10)give("grp10",at);
+    if(!isGroup(w)&&tonnage(w)>=10000)give("ton",at);
+    const list=[];
+    for(const e of w.exercises||[]){
+      const d=e.sets.filter(s=>s.done&&s.r>0);if(!d.length)continue;
+      const top=d.reduce((a,s)=>setScore(s)>setScore(a)?s:a);
+      const sc=setScore(top),prev=best[e.x];
+      if(prev&&sc>prev.v*(1+1e-6)+1e-9){list.push({x:e.x,n:e.n,w:top.w,r:top.r});prs++;give("pr1",at)}
+      if(!prev||sc>prev.v)best[e.x]={v:sc,w:top.w,r:top.r,date:at,n:e.n};
+      if(g.record&&g.record.x===e.x&&top.w>0&&e1rm(top.w,top.r)>=+g.record.kg)give("goal",at);
+    }
+    if(list.length)prByW[w.id]=list;
+    const wk=weekStart(new Date(at).getTime());weekN[wk]=(weekN[wk]||0)+1;
+    if(weekN[wk]===per){counted.set(wk,at);run=counted.has(prevWeek(wk))?run+1:1;bestRun=Math.max(bestRun,run);if(run===4)give("s4",at);if(run===12)give("s12",at)}
+  }
+  // цель по весу тела: первая запись, где вес дошёл до цели (в сторону от первой записи)
+  if(g.weight&&S.body.length){const t=+g.weight,b=[...S.body].sort((a,c)=>a.date.localeCompare(c.date)),first=b[0].kg;
+    if(Math.abs(first-t)>=0.15){const hit=b.find(x=>first>t?x.kg<=t+0.05:x.kg>=t-0.05);if(hit){const at=hit.date+"T12:00:00";if(!medals.goal||at<medals.goal)medals.goal=at}}}
+  for(const x of wins){const at=x.at;if(!medals.win||at<medals.win)medals.win=at}
+  // текущий стрик: эта неделя ещё идёт, поэтому если она не засчитана, считаем с прошлой
+  let cur=0,wk=weekStart();if(!counted.has(wk))wk=prevWeek(wk);while(counted.has(wk)){cur++;wk=prevWeek(wk)}
+  const mc=Object.keys(medals).length;
+  const points=n*PTS.workout+prs*PTS.pr+counted.size*PTS.week+mc*PTS.medal;
+  const val={n,grp,prs,points,level:levelFor(points),medals,prByW,best,streak:cur,bestStreak:bestRun,weeks:counted.size,per,thisWeek:weekN[weekStart()]||0,wins:wins.length};
+  statsCache={key,val};return val;
+}
+/* калории ≈ MET × вес тела × часы (ТЗ, раздел 9). Только для мотивации, в медали и очки не идут. */
+const MET={"Йога":3,"Растяжка":3,"Cycle":7,"Bootcamp":8,"Кроссфит":8,"Другое":5};
+function bodyKgAt(iso){const d=iso.slice(0,10);let kg=null;for(const b of S.body){if(b.date<=d)kg=b.kg}if(kg==null&&S.body.length)kg=S.body[S.body.length-1].kg;return kg||(S.prof.sex==="f"?65:80)}
+function workMin(w){
+  if(isGroup(w))return w.min||0;
+  const m=w.finishedAt?(new Date(w.finishedAt)-new Date(w.startedAt))/60000:0;
+  if(m>0&&m<=180)return m;
+  // забыл нажать «Завершить»: оцениваем по подходам, ~3 минуты на подход с отдыхом
+  const sets=(w.exercises||[]).reduce((a,e)=>a+e.sets.filter(s=>s.done).length,0);return Math.min(180,sets*3);
+}
+function kcal(w){const met=isGroup(w)?(MET[w.kind]||5):5;return Math.round(met*bodyKgAt(w.startedAt)*workMin(w)/60/10)*10}
+/* мотивационные фразы: одна на тренировку (по её id, чтобы в окне и на картинке была одна и та же) */
+const PHRASES=[
+  "Ещё один кирпич в фундамент.",
+  "Сегодня ты сильнее, чем вчера.",
+  "Дисциплина сильнее настроения. Сегодня это снова видно.",
+  "Гриф помнит тех, кто приходит регулярно.",
+  "Мышцы растут на отдыхе. Поешь, выспись, вернись.",
+  "Не быстро, а каждую неделю. Так и строится сила.",
+  "Тренировка в копилке. Через год скажешь себе спасибо.",
+  "Работа сделана. Можно гордиться собой.",
+  "Каждый подход приближает к цели. Сегодня шагов было много.",
+  "Сильный не тот, кто не устаёт, а тот, кто приходит снова.",
+  "Слово, данное себе, сдержано.",
+  "Тело запоминает. Продолжай в том же темпе.",
+  "Плюс одна тренировка, минус одна отговорка.",
+  "Дети смотрят на пример. Сегодня он был хороший.",
+  "Ровно, спокойно, без травм. Так и надо.",
+  "Сегодняшний пот станет завтрашним рекордом.",
+  "Вода, белок, сон, и следующая будет ещё лучше.",
+  "Не идеально, но сделано. А сделано лучше идеального.",
+  "Сила приходит к тем, кто не пропускает.",
+  "Так держать! Стрик сам себя не сделает.",
+];
+function phraseFor(id){let h=0;for(const ch of String(id))h=(h*31+ch.charCodeAt(0))>>>0;return PHRASES[h%PHRASES.length]}
+const fmtInt=n=>String(Math.round(n)).replace(/\B(?=(\d{3})+(?!\d))/g," ");
+const nedel=n=>{const a=n%10,b=n%100;return a===1&&b!==11?"неделя":a>=2&&a<=4&&(b<10||b>=20)?"недели":"недель"};
+function medalHtml(m,at,sz=""){return `<span class="medal ${sz} ${at?"m"+m.c:"off"}" aria-hidden="true">${esc(m.ic)}</span>`}
+// победители прошлых месяцев: больше всех тренировок в семье; нужно хотя бы 2 человека с тренировками; ничья — медаль всем лидерам
+async function loadWins(){
+  if(!sb||!C.user)return;
+  const now=new Date(),m0=new Date(now.getFullYear(),now.getMonth(),1).toISOString();
+  const {data,error}=await sb.from("workouts").select("user_id,started_at").eq("deleted",false).lt("started_at",m0).range(0,9999);
+  if(error||!data)return;
+  const by={};for(const r of data){const d=new Date(r.started_at),m=d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0");(by[m]=by[m]||{})[r.user_id]=(by[m][r.user_id]||0)+1}
+  const wins=[];
+  for(const [m,u] of Object.entries(by)){const c=Object.values(u);if(c.length<2)continue;const mx=Math.max(...c);
+    if((u[C.user.id]||0)===mx){const [y,mm]=m.split("-").map(Number);wins.push({m,at:new Date(y,mm,1,9).toISOString()})}}
+  wins.sort((a,b)=>a.m.localeCompare(b.m));
+  if(JSON.stringify(wins)!==JSON.stringify(LS.get("zal_wins",[]))){LS.set("zal_wins",wins);return true}
+}
+
 /* ---------- старт / финиш ---------- */
 function buildEx(slot,prog){
   const d={...slotDef(slot),prog},sg=suggest(d);
@@ -762,12 +901,11 @@ function startWorkout(k){
 function finishWorkout(){
   const a=S.active;if(!a)return;
   const w={id:a.id,prog:a.prog,title:a.title||day(a.prog)?.title||"Тренировка",startedAt:a.startedAt,finishedAt:new Date().toISOString(),exercises:a.exercises.map(e=>({x:e.x,n:e.n,sets:e.sets.map(s=>({w:+s.w,r:+s.r,done:!!s.done}))}))};
-  const prs=[];
-  for(const e of w.exercises){const before=lastBest(e.x);const best=Math.max(0,...e.sets.filter(s=>s.done).map(s=>e1rm(s.w,s.r)));if(best>0&&before>0&&best>before+0.01)prs.push(e.n)}
+  const before=calcStats();
   S.active=null;saveActive();stopRest();wake(false);
   saveWorkout(w);
   $("#layer").innerHTML="";
-  showSummary(w,prs);render();
+  showSummary(w,before);render();
 }
 
 /* ---------- таймер отдыха, свисток, экран не гаснет ----------
@@ -871,9 +1009,10 @@ function vToday(){
     <div class="stat"><b>${S.workouts.length}</b><span>всего</span></div>
     <div class="stat"><b>${bw?fmtKg(bw):"—"}</b><span>вес, кг</span></div>
   </div>
+  ${awardsCard()}
   ${goalCards()}
   ${cloudCard()}
-  <div class="muted num" style="text-align:center;font-size:11px"><span data-act="diag">версия 12 · ${C.user?cloudLabel():S.workouts.length?"данные только на телефоне":"данных пока нет"}</span>${S.diag?"<br>"+diag():""}</div>
+  <div class="muted num" style="text-align:center;font-size:11px"><span data-act="diag">версия 13 · ${C.user?cloudLabel():S.workouts.length?"данные только на телефоне":"данных пока нет"}</span>${S.diag?"<br>"+diag():""}</div>
   </div>`;
 }
 /* цели: вес тела, рекорд в упражнении, тренировок в неделю (ТЗ, раздел 2 «Мотивация») */
@@ -1193,17 +1332,16 @@ function drawGroup(){
   sheet(`<div><div class="eyebrow">Групповое занятие</div><h1 style="font-size:24px!important">Что было?</h1></div>
   <div class="chips">${GROUP_KINDS.map(k=>`<button class="chip" data-act="grp-kind" data-k="${k}" aria-pressed="${g.kind===k}">${k}</button>`).join("")}</div>
   <div class="field"><label>Сколько минут</label><div class="stepper"><button data-act="grp-min" data-d="-5" aria-label="Меньше">−</button><b>${g.min}</b><button data-act="grp-min" data-d="5" aria-label="Больше">+</button></div></div>
-  <div class="muted" style="font-size:13px">Засчитается как тренировка: в неделю, цели и (позже) в стрик и семейный челлендж.</div>
+  <div class="muted" style="font-size:13px">Засчитается как тренировка: в неделю, цели, стрик, очки и (позже) в семейный челлендж.</div>
   <button class="btn primary full" data-act="grp-save">Засчитать</button>
   <button class="btn ghost full" data-act="close-sheet-btn">Отмена</button>`);
 }
 function saveGroup(){
   const g=S.grp,end=new Date(),st=new Date(end.getTime()-g.min*60000);
   const w={id:uid(),type:"group",kind:g.kind,min:g.min,prog:null,title:g.kind,startedAt:st.toISOString(),finishedAt:end.toISOString(),exercises:[]};
+  const before=calcStats();
   saveWorkout(w);
-  sheet(`<div class="row">${wPlate(w)}<div><div class="eyebrow">Засчитано</div><h1 style="font-size:24px!important">Красава${nick()?", "+esc(nick()):""}!</h1></div></div>
-  <div class="kv"><div><b>${g.min}</b><span>минут</span></div><div><b>${esc(g.kind)}</b><span>вид</span></div><div><b>${weekCount()}</b><span>на этой неделе</span></div></div>
-  <button class="btn primary full" data-act="close-sheet-btn">Готово</button>`);
+  showSummary(w,before);
   render();
 }
 
@@ -1218,6 +1356,7 @@ function vProfile(){
   <div class="card row" style="gap:14px">${avatarHtml("xl")}<div style="min-width:0"><h2 style="font-size:22px">${esc(P.name||LS.get("zal_name","")||"Без имени")}</h2>
     <div class="muted" style="font-size:14px">${P.nick?"Обращение: «"+esc(P.nick)+"»":""}${C.user?"<br>"+esc(C.user.email):""}</div>
     <div class="row" style="margin-top:8px;gap:8px"><label class="btn ghost sm" for="photoFile">Сменить фото</label>${P.photo?`<button class="btn ghost sm" data-act="photo-reset">${C.meta.avatar?"Фото из Google":"Убрать"}</button>`:""}<input type="file" id="photoFile" accept="image/*" hidden></div></div></div>
+  ${S.workouts.length?awardsSection():""}
   <form class="card stack" id="meForm"><h2>Обо мне</h2>
     <div class="grid2"><div class="field"><label for="pName">Имя</label><input class="inp" id="pName" maxlength="30" value="${esc(P.name||"")}"></div>
     <div class="field"><label for="pNick">Как обращаться</label><input class="inp" id="pNick" maxlength="20" value="${esc(P.nick||"")}" placeholder="Чемпион"></div></div>
@@ -1326,13 +1465,119 @@ function onbAct(act,t){
 function sheet(html){$("#modal").innerHTML=`<div class="scrim" data-act="close-sheet"><div class="sheet" role="dialog" aria-modal="true">${html}</div></div>`}
 function closeSheet(){$("#modal").innerHTML=""}
 function exLog(w){return (w.exercises||[]).map(e=>{const d=e.sets.filter(s=>s.done);return `<div class="r"><span>${esc(e.n)}</span><span>${d.length?d.map(s=>fmtKg(s.w)+"×"+s.r).join(" · "):"пропущено"}</span></div>`}).join("")}
-function showSummary(w,prs){
-  const sets=w.exercises.reduce((a,e)=>a+e.sets.filter(s=>s.done).length,0);
-  sheet(`<div class="row">${wPlate(w)}<div><div class="eyebrow">Тренировка сохранена</div><h1 style="font-size:20px">${esc(wTitle(w))}</h1></div></div>
-  <div class="kv"><div><b>${fdur(new Date(w.finishedAt)-new Date(w.startedAt))}</b><span>время</span></div><div><b>${sets}</b><span>подходов</span></div><div><b>${fmtKg(Math.round(tonnage(w)))}</b><span>тоннаж, кг</span></div></div>
-  ${prs.length?`<div><span class="pr">Новые рекорды:</span> ${prs.map(esc).join(", ")}</div>`:""}
-  <div class="exlog">${exLog(w)}</div>
-  ${nextKey()?`<div class="muted" style="font-size:13px">Следующая по плану: ${esc(day(nextKey()).title)}. Веса для неё приложение подставит само.</div>`:""}
+/* ---------- награды: экраны ---------- */
+function levelBar(st){const L=st.level,pct=Math.max(0,Math.min(100,(st.points-L.from)/(L.to-L.from)*100));return `<div class="bar"><i style="width:${pct}%;background:var(--plate-b)"></i></div>`}
+function awardsCard(){
+  if(!S.workouts.length)return "";
+  const st=calcStats(),L=st.level,got=Object.keys(st.medals).length;
+  return `<button class="card awards" data-tab-go="profile" aria-label="Награды: уровень ${L.n}, стрик ${st.streak}">
+    <div class="row between"><div class="row" style="gap:12px"><span class="lvl num">${L.n}</span><div style="text-align:left"><div class="eyebrow">Уровень</div><div class="t">${esc(L.name)}</div></div></div>
+    <div style="text-align:right"><div class="num" style="font-size:30px;line-height:1">${st.streak}</div><div class="eyebrow">${nedel(st.streak)} стрик</div></div></div>
+    ${levelBar(st)}
+    <div class="row between muted" style="font-size:13px"><span>${fmtInt(st.points)} очков · до уровня ${L.n+1}: ${fmtInt(L.to-st.points)}</span><span>медали ${got} из ${MEDALS.length} ›</span></div>
+  </button>`;
+}
+function awardsSection(){
+  const st=calcStats(),L=st.level;
+  const recs=Object.entries(st.best).filter(([,b])=>b.w>0).sort((a,b)=>b[1].v-a[1].v).slice(0,8);
+  return `<div class="card stack"><div class="row between"><h2>Награды</h2><span class="muted" style="font-size:13px">${fmtInt(st.points)} очков</span></div>
+    <div class="row" style="gap:12px"><span class="lvl num">${L.n}</span><div class="grow" style="flex:1;min-width:0"><div class="t" style="font-weight:800">Уровень ${L.n} «${esc(L.name)}»</div>${levelBar(st)}<div class="muted" style="font-size:13px;margin-top:4px">До уровня ${L.n+1}: ${fmtInt(L.to-st.points)} очков</div></div></div>
+    <div class="kv"><div><b>${st.streak}</b><span>стрик, нед.</span></div><div><b>${st.bestStreak}</b><span>лучший стрик</span></div><div><b>${st.prs}</b><span>рекордов</span></div></div>
+    <div class="muted" style="font-size:13px">Неделя засчитывается, когда сделано ${st.per} ${st.per===1?"тренировка":st.per<5?"тренировки":"тренировок"} (цель в «Цели» ниже). На этой неделе: ${st.thisWeek} из ${st.per}.</div>
+    <div class="medals">${MEDALS.map(m=>{const at=st.medals[m.id];return `<div class="mcell${at?"":" lock"}">${medalHtml(m,at)}<div class="mn">${esc(m.n)}</div><div class="ms">${at?fdate(at):esc(m.d)}</div></div>`}).join("")}</div>
+    <details class="pts"><summary>За что очки</summary><div class="exlog" style="margin-top:8px">
+      <div class="r"><span>Тренировка или групповое занятие</span><span>${PTS.workout}</span></div>
+      <div class="r"><span>Новый рекорд в упражнении</span><span>${PTS.pr}</span></div>
+      <div class="r"><span>Засчитанная неделя стрика</span><span>${PTS.week}</span></div>
+      <div class="r"><span>Медаль</span><span>${PTS.medal}</span></div>
+      <div class="r"><span>Уровни</span><span>500 · 1 500 · 3 500 · 7 000</span></div></div></details>
+  </div>
+  ${recs.length?`<div class="card stack"><h2>Личные рекорды</h2><div class="exlog">${recs.map(([x,b])=>`<div class="r"><span>${esc(exName(x))}</span><span>${fmtKg(b.w)}×${b.r} · ${fdate(b.date)}</span></div>`).join("")}</div><div class="muted" style="font-size:13px">Лучший подход по расчётному максимуму на 1 раз. Первый результат рекордом не считается, рекорд — когда побил прошлый лучший.</div></div>`:""}`;
+}
+/* окно «Красава» после тренировки и после группового занятия */
+function showSummary(w,before){
+  const st=calcStats(),grp=isGroup(w);
+  const prs=st.prByW[w.id]||[];
+  const newM=MEDALS.filter(m=>st.medals[m.id]&&!before.medals[m.id]);
+  const dp=st.points-before.points,lvUp=st.level.n>before.level.n;
+  const sets=(w.exercises||[]).reduce((a,e)=>a+e.sets.filter(s=>s.done).length,0);
+  const info={w,grp,prs,newM,dp,st,lvUp,sets,kc:kcal(w),phrase:phraseFor(w.id),nick:nick()};
+  S.story={info,file:null,url:null};makeStory(info).catch(()=>{});
+  sheet(`<div class="row">${wPlate(w)}<div><div class="eyebrow">${grp?"Засчитано":"Тренировка сохранена"} · ${esc(wTitle(w))}</div><h1 style="font-size:30px!important">Красава${info.nick?", "+esc(info.nick):""}!</h1></div></div>
+  <div class="phrase">${esc(info.phrase)}</div>
+  ${grp?`<div class="kv"><div><b>${w.min}</b><span>минут</span></div><div><b>≈${fmtInt(info.kc)}</b><span>ккал</span></div><div><b>${st.thisWeek}</b><span>на этой неделе</span></div></div>`
+  :`<div class="kv"><div><b>${fdur(workMin(w)*60000)}</b><span>время</span></div><div><b>${fmtInt(tonnage(w))}</b><span>тоннаж, кг</span></div><div><b>≈${fmtInt(info.kc)}</b><span>ккал</span></div></div>`}
+  <div class="gain"><span class="g1">+${dp} очков</span><span>Стрик: ${st.streak} ${nedel(st.streak)}</span><span>${lvUp?`<b>Новый уровень ${st.level.n} «${esc(st.level.name)}»!</b>`:`Уровень ${st.level.n} · до ${st.level.n+1}: ${fmtInt(st.level.to-st.points)}`}</span></div>
+  ${st.thisWeek>=st.per&&before.thisWeek<st.per?`<div class="banner" style="border-left-color:var(--plate-b)">Неделя засчитана: ${st.thisWeek} из ${st.per}. +${PTS.week} очков.</div>`:""}
+  ${prs.length?`<div><div class="pr" style="margin-bottom:4px">Новые рекорды</div><div class="exlog">${prs.map(p=>`<div class="r"><span>${esc(p.n)}</span><span>${p.w>0?fmtKg(p.w)+" кг × "+p.r:p.r+" повт."}</span></div>`).join("")}</div></div>`:""}
+  ${newM.length?`<div class="newm">${newM.map(m=>`<div class="row" style="gap:12px">${medalHtml(m,1,"lg")}<div><div class="eyebrow">Новая медаль</div><div style="font-weight:800">${esc(m.n)}</div></div></div>`).join("")}</div>`:""}
+  ${grp?"":`<details class="pts"><summary>Все подходы</summary><div class="exlog" style="margin-top:8px">${exLog(w)}</div></details>`}
+  ${!grp&&nextKey()?`<div class="muted" style="font-size:13px">Следующая по плану: ${esc(day(nextKey()).title)}. Веса приложение подставит само.</div>`:""}
+  <button class="btn primary full" data-act="story">Картинка для сторис</button>
+  <button class="btn ghost full" data-act="close-sheet-btn">Готово</button>`);
+}
+/* ---------- картинка для сторис: 1080×1920, рисуется на телефоне ---------- */
+function cssVar(n){return getComputedStyle(document.documentElement).getPropertyValue(n).trim()}
+async function makeStory(info){
+  try{await Promise.all([document.fonts.load('800 200px "Sofia Sans Extra Condensed"',"КРАСАВА0123"),document.fonts.load('700 40px "Sofia Sans"',"Рекорд")])}catch(e){}
+  const W=1080,H=1920,c=document.createElement("canvas");c.width=W;c.height=H;
+  // в DOM и с lang="ru": иначе у шрифта Sofia Sans включаются болгарские формы букв (в, д, т)
+  c.lang="ru";c.style.cssText="position:fixed;left:-99999px;top:0;width:10px;height:10px";document.body.appendChild(c);
+  const x=c.getContext("2d");try{x.lang="ru"}catch(e){}
+  const D='"Sofia Sans Extra Condensed","Sofia Sans",system-ui,sans-serif',B='"Sofia Sans",system-ui,sans-serif';
+  const plateCol={A:"#e8483a",B:"#3f78ea",C:"#e4b12a",D:"#46b06a"}[info.grp?"D":pc(info.w.prog)]||"#e8483a";
+  const fg="#eceae4",mu="#a3a7aa";
+  x.fillStyle="#1e2124";x.fillRect(0,0,W,H);
+  // гриф с блином
+  const by=330;const g=x.createLinearGradient(0,by-16,0,by+16);g.addColorStop(0,"#8d949a");g.addColorStop(.55,"#5d646a");g.addColorStop(1,"#454b50");
+  x.fillStyle=g;x.fillRect(0,by-14,W,28);x.fillStyle="rgba(0,0,0,.18)";for(let i=0;i<W;i+=10)x.fillRect(i,by-14,3,28);
+  x.fillStyle=g;x.fillRect(W-230,by-32,230,64);
+  const px=W-330;const pg=x.createLinearGradient(px,0,px+100,0);pg.addColorStop(0,plateCol);pg.addColorStop(1,"rgba(0,0,0,.25)");
+  x.fillStyle=plateCol;roundRect(x,px,by-150,100,300,16);x.fill();x.fillStyle=pg;roundRect(x,px,by-150,100,300,16);x.fill();
+  x.fillStyle="#fff";x.font=`800 64px ${D}`;x.textAlign="center";x.textBaseline="middle";x.fillText(info.grp?"Гр":String(info.w.prog||"").slice(0,2),px+50,by+4);
+  x.textAlign="left";x.textBaseline="alphabetic";
+  const d=new Date(info.w.startedAt);
+  x.fillStyle=mu;x.font=`700 44px ${B}`;x.fillText("ЗАЛ · "+DOW[d.getDay()]+", "+d.getDate()+" "+MON[d.getMonth()]+" "+d.getFullYear(),80,150);
+  x.fillStyle=fg;fitText(x,"КРАСАВА"+(info.nick?",":"!"),`800 {s}px ${D}`,250,W-150);x.fillText("КРАСАВА"+(info.nick?",":"!"),72,690);
+  let y=690;
+  if(info.nick){x.fillStyle=plateCol;fitText(x,info.nick.toUpperCase()+"!",`800 {s}px ${D}`,200,W-160);x.fillText(info.nick.toUpperCase()+"!",72,y+190);y+=190}
+  x.fillStyle=mu;x.font=`700 52px ${B}`;x.fillText(wTitle(info.w),80,y+90);y+=90;
+  // табло
+  const cells=info.grp?[[String(info.w.min),"минут"],["≈"+fmtInt(info.kc),"ккал"],[String(info.st.streak),"стрик, нед."]]
+    :[[fdur(workMin(info.w)*60000).replace(" мин","м").replace(" ч ","ч "),"время"],[fmtInt(tonnage(info.w)),"тоннаж, кг"],["≈"+fmtInt(info.kc),"ккал"]];
+  y+=50;x.fillStyle="#3a4046";x.fillRect(80,y,W-160,4);x.fillRect(80,y+230,W-160,4);
+  const cw=(W-160)/3;cells.forEach(([v,l],i)=>{const cx=80+i*cw+(i?36:0);if(i){x.fillStyle="#3a4046";x.fillRect(80+i*cw,y+30,4,170)}
+    x.fillStyle=fg;fitText(x,v,`800 {s}px ${D}`,130,cw-50);x.fillText(v,cx,y+160);x.fillStyle=mu;x.font=`600 36px ${B}`;x.fillText(l,cx,y+206)});
+  y+=330;
+  x.font=`800 54px ${B}`;x.fillStyle="#3f78ea";x.fillText("Уровень "+info.st.level.n+" «"+info.st.level.name+"»",80,y);
+  x.fillStyle=mu;x.font=`700 44px ${B}`;x.fillText("Стрик "+info.st.streak+" "+nedel(info.st.streak)+" · +"+info.dp+" очков",80,y+66);y+=150;
+  x.fillStyle=fg;x.font=`600 50px ${B}`;y=wrapText(x,"«"+info.phrase+"»",80,y,W-160,64)+120;
+  const lines=[...info.prs.slice(0,3).map(p=>["Рекорд",p.n+(p.w>0?" "+fmtKg(p.w)+"×"+p.r:" "+p.r+" повт."),"#e4b12a"]),...info.newM.slice(0,2).map(m=>["Медаль",m.n,"#46b06a"])];
+  for(const [k,v,col] of lines.slice(0,Math.max(0,Math.floor((H-40-y)/90)+1))){x.fillStyle=col;roundRect(x,80,y-46,170,60,12);x.fill();x.fillStyle="#1e2124";x.font=`800 36px ${B}`;x.fillText(k,98,y-4);
+    x.fillStyle=fg;fitText(x,v,`700 {s}px ${B}`,44,W-160-200);x.fillText(v,272,y-2);y+=90}
+  const blob=await new Promise(r=>c.toBlob(r,"image/png"));c.remove();
+  if(!blob)throw new Error("no blob");
+  const name="zal-"+info.w.startedAt.slice(0,10)+".png";
+  if(S.story&&S.story.info===info){S.story.file=new File([blob],name,{type:"image/png"});S.story.url=c.toDataURL("image/png")}
+  return S.story;
+}
+function roundRect(x,l,t,w,h,r){x.beginPath();x.moveTo(l+r,t);x.arcTo(l+w,t,l+w,t+h,r);x.arcTo(l+w,t+h,l,t+h,r);x.arcTo(l,t+h,l,t,r);x.arcTo(l,t,l+w,t,r);x.closePath()}
+function fitText(x,t,font,max,width){let s=max;x.font=font.replace("{s}",s);while(s>20&&x.measureText(t).width>width){s-=4;x.font=font.replace("{s}",s)}}
+function wrapText(x,t,l,top,width,lh){const words=t.split(" ");let line="",y=top;for(const w of words){const test=line?line+" "+w:w;if(x.measureText(test).width>width&&line){x.fillText(line,l,y);line=w;y+=lh}else line=test}if(line)x.fillText(line,l,y);return y}
+async function shareStory(){
+  const s=S.story;if(!s)return;
+  if(!s.file){toast("Рисую картинку…");try{await makeStory(s.info)}catch(e){}}
+  if(!s.file){toast("Не получилось нарисовать картинку");return}
+  try{if(navigator.canShare&&navigator.canShare({files:[s.file]})){await navigator.share({files:[s.file]});return}}
+  catch(e){if(e&&e.name==="AbortError")return}
+  showStoryImg();
+}
+function showStoryImg(){
+  const s=S.story;
+  sheet(`<h1 style="font-size:22px!important">Картинка для сторис</h1>
+  <div class="muted" style="font-size:14px">Нажми на картинку и подержи → «Сохранить в Фото». Потом выложи в Instagram из галереи.</div>
+  <img class="storyimg" src="${s.url}" alt="Картинка с итогами тренировки">
+  <a class="btn ghost full" href="${s.url}" download="${esc(s.file.name)}">Скачать файл</a>
   <button class="btn primary full" data-act="close-sheet-btn">Готово</button>`);
 }
 function showHist(id,confirm=false){
@@ -1428,6 +1673,7 @@ document.addEventListener("click",async ev=>{
     case "hist-del":showHist(t.dataset.id,true);break;
     case "hist-del-yes":deleteWorkout(t.dataset.id);closeSheet();render();toast("Тренировка удалена");break;
     case "backup":doBackup();break;
+    case "story":shareStory();break;
     case "diag":S.diag=!S.diag;render();break;
     case "bw-del":deleteBody(t.dataset.d);render();break;
     case "login":closeSheet();login();break;
