@@ -126,8 +126,8 @@ h2{font-family:var(--f-body);font-weight:700;font-size:17px}
 
 /* нижняя панель */
 .tabs{position:fixed;left:0;right:0;bottom:calc(0px - var(--gap));z-index:20;background:var(--bg);border-top:1.5px solid var(--line);padding-bottom:var(--bot);padding-left:env(safe-area-inset-left,0px);padding-right:env(safe-area-inset-right,0px)}
-.tabs nav{max-width:520px;margin:0 auto;display:grid;grid-template-columns:repeat(5,1fr)}
-.tabs button{position:relative;display:flex;flex-direction:column;align-items:center;gap:3px;padding:10px 0 8px;font-size:11.5px;color:var(--faint);font-weight:600}
+.tabs nav{max-width:520px;margin:0 auto;display:grid;grid-template-columns:repeat(6,1fr)}
+.tabs button{position:relative;display:flex;flex-direction:column;align-items:center;gap:3px;padding:10px 0 8px;font-size:10.5px;color:var(--faint);font-weight:600}
 .tabs button[aria-current="page"]{color:var(--fg)}
 .tabs button[aria-current="page"]::before{content:"";position:absolute;top:-1.5px;left:30%;right:30%;height:3px;border-radius:0 0 3px 3px;background:var(--fg)}
 .tabs svg{width:24px;height:24px}
@@ -264,6 +264,21 @@ select.inp{appearance:none;font-weight:600;background-image:linear-gradient(45de
 .stepper b{text-align:center;font-family:var(--f-num);font-size:26px}
 .grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
 /* v13: награды, окно «Красава», медали */
+/* семья */
+.list.flat{background:none;border-radius:0}
+.list.flat .item{padding-inline:0}
+.chal .place{width:18px;text-align:center;font-size:20px;color:var(--muted)}
+.chal.lead .place{color:var(--fg)}
+.chal .bar{display:block;height:8px;margin-top:6px}
+.chal.lead .bar i{background:var(--plate-c)}
+.chal .cnt{font-size:26px;min-width:28px;text-align:right}
+.chal.off{opacity:.6}
+.feed{align-items:flex-start}
+.feed .ft{display:block;line-height:1.3}
+.feed .ft b{font-weight:800}
+.feed .s{display:block;margin-top:2px}
+.prs{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}
+.pr{font-size:12px;font-weight:700;padding:3px 8px;border-radius:6px;background:color-mix(in srgb,var(--plate-c) 22%,transparent);color:var(--fg)}
 .awards{display:flex;flex-direction:column;gap:10px;width:100%;text-align:left}
 .awards .t{font-weight:800;font-size:18px;line-height:1.1}
 .lvl{display:grid;place-items:center;width:52px;height:52px;border-radius:50%;background:var(--plate-b);color:#fff;font-size:30px;flex:none;box-shadow:inset 0 0 0 3px color-mix(in srgb,#000 22%,var(--plate-b)),inset 0 0 0 5px color-mix(in srgb,#fff 18%,var(--plate-b))}
@@ -293,6 +308,7 @@ select.inp{appearance:none;font-weight:600;background-image:linear-gradient(45de
   <button data-tab="program"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M8 6h12M8 12h12M8 18h12M4 6h.01M4 12h.01M4 18h.01"/></svg>Программа</button>
   <button data-tab="history"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><rect x="4" y="5" width="16" height="15" rx="2"/><path d="M4 9h16M9 3v4M15 3v4"/></svg>История</button>
   <button data-tab="progress"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19h16M5 15l4-4 3 3 6-7"/></svg>Прогресс</button>
+  <button data-tab="family"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="9" cy="8.5" r="3"/><circle cx="16.5" cy="9.5" r="2.4"/><path d="M3.5 19a5.5 5.5 0 0 1 11 0M14.5 14.6a4.5 4.5 0 0 1 6 4.4"/></svg>Семья</button>
   <button data-tab="profile"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="8.5" r="3.5"/><path d="M5 20a7 7 0 0 1 14 0"/></svg>Профиль</button>
 </nav></div>
 <div id="layer"></div>
@@ -796,11 +812,13 @@ const prevWeek=ws=>weekStart(ws-864e5);
 // «сила» подхода для рекордов: с весом — расчётный максимум на 1 раз; без веса — повторы (меньше любого веса)
 const setScore=s=>s.w>0?e1rm(s.w,s.r):s.r*0.001;
 let statsCache={key:null,val:null};
-function calcStats(){
-  const g=goals(),per=g.perWeek||3,wins=LS.get("zal_wins",[]);
-  const key=[S.workouts,S.body,JSON.stringify(g),JSON.stringify(wins)];
-  if(statsCache.key&&statsCache.key.every((k,i)=>k===key[i]))return statsCache.val;
-  const ws=[...S.workouts].sort((a,b)=>a.startedAt.localeCompare(b.startedAt));
+// o — чужие данные (вкладка «Семья»): {workouts, body, goals, wins}; без o — свои
+function calcStats(o){
+  const own=!o;o=o||{workouts:S.workouts,body:S.body,goals:goals(),wins:LS.get("zal_wins",[])};
+  const g=o.goals||{},per=g.perWeek||3,wins=o.wins||[],BODY=o.body||[];
+  const key=[o.workouts,BODY,JSON.stringify(g),JSON.stringify(wins)];
+  if(own&&statsCache.key&&statsCache.key.every((k,i)=>k===key[i]))return statsCache.val;
+  const ws=[...o.workouts].sort((a,b)=>a.startedAt.localeCompare(b.startedAt));
   const medals={},best={},prByW={},weekN={},counted=new Map();
   let n=0,grp=0,prs=0,run=0,bestRun=0;
   const give=(id,at)=>{if(!medals[id])medals[id]=at};
@@ -824,7 +842,7 @@ function calcStats(){
     if(weekN[wk]===per){counted.set(wk,at);run=counted.has(prevWeek(wk))?run+1:1;bestRun=Math.max(bestRun,run);if(run===4)give("s4",at);if(run===12)give("s12",at)}
   }
   // цель по весу тела: первая запись, где вес дошёл до цели (в сторону от первой записи)
-  if(g.weight&&S.body.length){const t=+g.weight,b=[...S.body].sort((a,c)=>a.date.localeCompare(c.date)),first=b[0].kg;
+  if(g.weight&&BODY.length){const t=+g.weight,b=[...BODY].sort((a,c)=>a.date.localeCompare(c.date)),first=b[0].kg;
     if(Math.abs(first-t)>=0.15){const hit=b.find(x=>first>t?x.kg<=t+0.05:x.kg>=t-0.05);if(hit){const at=hit.date+"T12:00:00";if(!medals.goal||at<medals.goal)medals.goal=at}}}
   for(const x of wins){const at=x.at;if(!medals.win||at<medals.win)medals.win=at}
   // текущий стрик: эта неделя ещё идёт, поэтому если она не засчитана, считаем с прошлой
@@ -832,7 +850,7 @@ function calcStats(){
   const mc=Object.keys(medals).length;
   const points=n*PTS.workout+prs*PTS.pr+counted.size*PTS.week+mc*PTS.medal;
   const val={n,grp,prs,points,level:levelFor(points),medals,prByW,best,streak:cur,bestStreak:bestRun,weeks:counted.size,per,thisWeek:weekN[weekStart()]||0,wins:wins.length};
-  statsCache={key,val};return val;
+  if(own)statsCache={key,val};return val;
 }
 /* калории ≈ MET × вес тела × часы (ТЗ, раздел 9). Только для мотивации, в медали и очки не идут. */
 const MET={"Йога":3,"Растяжка":3,"Cycle":7,"Bootcamp":8,"Кроссфит":8,"Другое":5};
@@ -872,17 +890,19 @@ function phraseFor(id){let h=0;for(const ch of String(id))h=(h*31+ch.charCodeAt(
 const fmtInt=n=>String(Math.round(n)).replace(/\B(?=(\d{3})+(?!\d))/g," ");
 const nedel=n=>{const a=n%10,b=n%100;return a===1&&b!==11?"неделя":a>=2&&a<=4&&(b<10||b>=20)?"недели":"недель"};
 function medalHtml(m,at,sz=""){return `<span class="medal ${sz} ${at?"m"+m.c:"off"}" aria-hidden="true">${esc(m.ic)}</span>`}
+// счёт тренировок по месяцам: {"2026-11":{user_id:N}}; before — только раньше этой даты (ISO)
+function monthCounts(rows,before){const by={};for(const r of rows){const d=new Date(r.started_at);if(before&&d>=new Date(before))continue;const m=d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0");(by[m]=by[m]||{})[r.user_id]=(by[m][r.user_id]||0)+1}return by}
+function winsFor(by,uid){const wins=[];
+  for(const [m,u] of Object.entries(by)){const c=Object.values(u);if(c.length<2)continue;const mx=Math.max(...c);
+    if((u[uid]||0)===mx){const [y,mm]=m.split("-").map(Number);wins.push({m,at:new Date(y,mm,1,9).toISOString()})}}
+  return wins.sort((a,b)=>a.m.localeCompare(b.m))}
 // победители прошлых месяцев: больше всех тренировок в семье; нужно хотя бы 2 человека с тренировками; ничья — медаль всем лидерам
 async function loadWins(){
   if(!sb||!C.user)return;
   const now=new Date(),m0=new Date(now.getFullYear(),now.getMonth(),1).toISOString();
   const {data,error}=await sb.from("workouts").select("user_id,started_at").eq("deleted",false).lt("started_at",m0).range(0,9999);
   if(error||!data)return;
-  const by={};for(const r of data){const d=new Date(r.started_at),m=d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0");(by[m]=by[m]||{})[r.user_id]=(by[m][r.user_id]||0)+1}
-  const wins=[];
-  for(const [m,u] of Object.entries(by)){const c=Object.values(u);if(c.length<2)continue;const mx=Math.max(...c);
-    if((u[C.user.id]||0)===mx){const [y,mm]=m.split("-").map(Number);wins.push({m,at:new Date(y,mm,1,9).toISOString()})}}
-  wins.sort((a,b)=>a.m.localeCompare(b.m));
+  const wins=winsFor(monthCounts(data,m0),C.user.id);
   if(JSON.stringify(wins)!==JSON.stringify(LS.get("zal_wins",[]))){LS.set("zal_wins",wins);return true}
 }
 
@@ -973,7 +993,7 @@ function restoreRest(){const r=LS.get("zal_rest",null);if(r&&S.active&&Date.now(
 /* ---------- экраны ---------- */
 function render(){
   document.querySelectorAll("#tabs button").forEach(b=>b.setAttribute("aria-current",b.dataset.tab===S.tab?"page":"false"));
-  const v={today:vToday,program:vProgram,history:vHistory,progress:vProgress,profile:vProfile}[S.tab]||vToday;
+  const v={today:vToday,program:vProgram,history:vHistory,progress:vProgress,family:vFamily,profile:vProfile}[S.tab]||vToday;
   $("#app").innerHTML=v();
   if(S.active&&S.layerOpen&&!$("#layer").innerHTML) renderLayer();
   maybeOnboard();
@@ -1012,7 +1032,7 @@ function vToday(){
   ${awardsCard()}
   ${goalCards()}
   ${cloudCard()}
-  <div class="muted num" style="text-align:center;font-size:11px"><span data-act="diag">версия 13 · ${C.user?cloudLabel():S.workouts.length?"данные только на телефоне":"данных пока нет"}</span>${S.diag?"<br>"+diag():""}</div>
+  <div class="muted num" style="text-align:center;font-size:11px"><span data-act="diag">версия 14 · ${C.user?cloudLabel():S.workouts.length?"данные только на телефоне":"данных пока нет"}</span>${S.diag?"<br>"+diag():""}</div>
   </div>`;
 }
 /* цели: вес тела, рекорд в упражнении, тренировок в неделю (ТЗ, раздел 2 «Мотивация») */
@@ -1477,13 +1497,13 @@ function awardsCard(){
     <div class="row between muted" style="font-size:13px"><span>${fmtInt(st.points)} очков · до уровня ${L.n+1}: ${fmtInt(L.to-st.points)}</span><span>медали ${got} из ${MEDALS.length} ›</span></div>
   </button>`;
 }
-function awardsSection(){
-  const st=calcStats(),L=st.level;
+function awardsSection(st,other){
+  st=st||calcStats();const L=st.level;
   const recs=Object.entries(st.best).filter(([,b])=>b.w>0).sort((a,b)=>b[1].v-a[1].v).slice(0,8);
   return `<div class="card stack"><div class="row between"><h2>Награды</h2><span class="muted" style="font-size:13px">${fmtInt(st.points)} очков</span></div>
     <div class="row" style="gap:12px"><span class="lvl num">${L.n}</span><div class="grow" style="flex:1;min-width:0"><div class="t" style="font-weight:800">Уровень ${L.n} «${esc(L.name)}»</div>${levelBar(st)}<div class="muted" style="font-size:13px;margin-top:4px">До уровня ${L.n+1}: ${fmtInt(L.to-st.points)} очков</div></div></div>
     <div class="kv"><div><b>${st.streak}</b><span>стрик, нед.</span></div><div><b>${st.bestStreak}</b><span>лучший стрик</span></div><div><b>${st.prs}</b><span>рекордов</span></div></div>
-    <div class="muted" style="font-size:13px">Неделя засчитывается, когда сделано ${st.per} ${st.per===1?"тренировка":st.per<5?"тренировки":"тренировок"} (цель в «Цели» ниже). На этой неделе: ${st.thisWeek} из ${st.per}.</div>
+    <div class="muted" style="font-size:13px">Неделя засчитывается, когда сделано ${st.per} ${st.per===1?"тренировка":st.per<5?"тренировки":"тренировок"}${other?"":" (цель в «Цели» ниже)"}. На этой неделе: ${st.thisWeek} из ${st.per}.</div>
     <div class="medals">${MEDALS.map(m=>{const at=st.medals[m.id];return `<div class="mcell${at?"":" lock"}">${medalHtml(m,at)}<div class="mn">${esc(m.n)}</div><div class="ms">${at?fdate(at):esc(m.d)}</div></div>`}).join("")}</div>
     <details class="pts"><summary>За что очки</summary><div class="exlog" style="margin-top:8px">
       <div class="r"><span>Тренировка или групповое занятие</span><span>${PTS.workout}</span></div>
@@ -1492,7 +1512,124 @@ function awardsSection(){
       <div class="r"><span>Медаль</span><span>${PTS.medal}</span></div>
       <div class="r"><span>Уровни</span><span>500 · 1 500 · 3 500 · 7 000</span></div></div></details>
   </div>
-  ${recs.length?`<div class="card stack"><h2>Личные рекорды</h2><div class="exlog">${recs.map(([x,b])=>`<div class="r"><span>${esc(exName(x))}</span><span>${fmtKg(b.w)}×${b.r} · ${fdate(b.date)}</span></div>`).join("")}</div><div class="muted" style="font-size:13px">Лучший подход по расчётному максимуму на 1 раз. Первый результат рекордом не считается, рекорд — когда побил прошлый лучший.</div></div>`:""}`;
+  ${recs.length?`<div class="card stack"><h2>Личные рекорды</h2><div class="exlog">${recs.map(([x,b])=>`<div class="r"><span>${esc(EXMAP[x]?EXMAP[x].n:(b.n||exName(x)))}</span><span>${fmtKg(b.w)}×${b.r} · ${fdate(b.date)}</span></div>`).join("")}</div><div class="muted" style="font-size:13px">Лучший подход по расчётному максимуму на 1 раз. Первый результат рекордом не считается, рекорд — когда побил прошлый лучший.</div></div>`:""}`;
+}
+
+/* ---------- семья (этап 5 ТЗ «Зал») ----------
+   Правила базы (RLS) уже дают каждому из списка почт читать тренировки, вес и профили всех.
+   Здесь только чтение: менять чужие данные приложение не умеет. Очки, медали и победители месяца
+   считаются теми же функциями, что и свои, поэтому у всех получаются одинаковые цифры. */
+const F={loading:false,err:null,errAt:0,data:LS.get("zal_fam",null),member:null};
+const monthKey=d=>d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0");
+const MONTHS=["январь","февраль","март","апрель","май","июнь","июль","август","сентябрь","октябрь","ноябрь","декабрь"];
+const MONTHS_P=["январе","феврале","марте","апреле","мае","июне","июле","августе","сентябре","октябре","ноябре","декабре"];
+async function loadFam(force){
+  if(!sb||!C.user||C.allowed!==true||F.loading)return;
+  if(!force&&F.data&&F.data.me===C.user.id&&Date.now()-F.data.t<60000)return;
+  if(!force&&F.err&&Date.now()-F.errAt<20000)return;
+  if(!navigator.onLine){F.err="offline";F.errAt=Date.now();return}
+  F.loading=true;
+  try{
+    const [a,p,w,b]=await Promise.all([
+      sb.from("allowed_emails").select("email,name,added_at").order("added_at"),
+      sb.from("profiles").select("user_id,email,name,avatar_url,data"),
+      sb.from("workouts").select("user_id,data").eq("deleted",false).range(0,9999),
+      sb.from("body").select("user_id,date,kg").eq("deleted",false).range(0,9999)]);
+    const e=a.error||p.error||w.error||b.error;if(e)throw e;
+    const prof=new Map(p.data.map(r=>[(r.email||"").toLowerCase(),r]));
+    const members=a.data.map(r=>{const pr=prof.get(r.email),d=(pr&&pr.data)||{},id=pr?pr.user_id:null;
+      return {uid:id,email:r.email,name:d.name||r.name||((pr&&pr.name)||"").split(" ")[0]||r.email.split("@")[0],
+        photo:d.photo||(pr&&pr.avatar_url)||null,sex:d.sex||null,goals:d.goals||{},
+        workouts:id?w.data.filter(x=>x.user_id===id&&x.data&&x.data.startedAt).map(x=>normWorkout(x.data)).sort((x,y)=>y.startedAt.localeCompare(x.startedAt)):[],
+        body:id?b.data.filter(x=>x.user_id===id&&x.kg!=null).map(x=>({id:x.date,date:x.date,kg:+x.kg})).sort((x,y)=>x.date.localeCompare(y.date)):[]}});
+    F.data={t:Date.now(),me:C.user.id,members};F.err=null;
+    if(!LS.set("zal_fam",F.data))LS.del("zal_fam");
+  }catch(e){F.err=navigator.onLine?"err":"offline";F.errAt=Date.now()}
+  F.loading=false;
+  if(S.tab==="family"&&!$("#modal").innerHTML&&!(S.active&&S.layerOpen)&&!S.onb)render();
+}
+// участники: свои данные берём с телефона (они свежее облака), чужие из облака
+function famMembers(){
+  if(!F.data||!C.user||F.data.me!==C.user.id)return [];
+  const ms=F.data.members.map(m=>m.uid===C.user.id?{...m,me:true,name:S.prof.name||nick()||m.name,photo:S.prof.photo||C.meta.avatar||m.photo,sex:S.prof.sex||m.sex,goals:goals(),workouts:S.workouts,body:S.body}:m);
+  const rows=ms.filter(m=>m.uid).flatMap(m=>m.workouts.map(w=>({user_id:m.uid,started_at:w.startedAt})));
+  const cur=monthKey(new Date()),by=monthCounts(rows),past={};for(const k in by)if(k<cur)past[k]=by[k];
+  return ms.map(m=>({...m,wins:m.uid?winsFor(past,m.uid):[],month:m.uid?((by[cur]||{})[m.uid]||0):0}));
+}
+const famById=id=>famMembers().find(m=>m.uid===id);
+const did=m=>m.sex==="f"?"сделала":m.sex==="m"?"сделал":"сделал(а)";
+function famAvatar(m,cls=""){return m.photo?`<span class="avatar ${cls}"><img src="${esc(m.photo)}" alt="" referrerpolicy="no-referrer"></span>`:`<span class="avatar ${cls}">${esc((m.name||"?")[0].toUpperCase())}</span>`}
+function relDay(iso){const n=daysSince(iso);return n===0?"сегодня":n===1?"вчера":fdateL(iso)}
+function famStats(m){return m.me?calcStats():calcStats({workouts:m.workouts,body:m.body,goals:m.goals,wins:m.wins})}
+function challengeCard(ms){
+  const now=new Date(),left=new Date(now.getFullYear(),now.getMonth()+1,0).getDate()-now.getDate();
+  const act=ms.filter(m=>m.uid).sort((a,b)=>b.month-a.month||a.name.localeCompare(b.name));
+  const top=act.length?act[0].month:0,withW=act.filter(m=>m.month>0).length;
+  let place=0,prev=null;
+  const rows=act.map((m,i)=>{if(m.month!==prev){place=i+1;prev=m.month}const lead=m.month>0&&m.month===top;
+    return `<button class="item chal${lead?" lead":""}" data-act="fam-open" data-uid="${esc(m.uid)}"><span class="place num">${place}</span>${famAvatar(m)}
+      <span class="grow"><span class="t">${esc(m.name)}${m.me?" (ты)":""}</span><span class="bar"><i style="width:${top?Math.round(m.month/top*100):0}%"></i></span></span>
+      <span class="num cnt">${m.month}</span></button>`}).join("");
+  const waiting=ms.filter(m=>!m.uid);
+  // прошлый месяц: победитель, если тренировались хотя бы двое
+  const pm=new Date(now.getFullYear(),now.getMonth()-1,1),pk=monthKey(pm);
+  const pw=act.filter(m=>m.wins.some(x=>x.m===pk));
+  return `<div class="card stack"><div class="row between"><h2>Челлендж: ${MONTHS[now.getMonth()]}</h2><span class="muted" style="font-size:13px">${left?"ещё "+left+" "+dn(left):"последний день"}</span></div>
+    <div class="muted" style="font-size:13px">Кто больше тренировок за месяц. Групповые занятия тоже считаются. Победитель получает медаль «Победитель месяца» 1-го числа.</div>
+    <div class="list flat">${rows||`<div class="empty">Пока никто не вошёл в приложение</div>`}
+    ${waiting.map(m=>`<div class="item chal off"><span class="place num">–</span>${famAvatar(m)}<span class="grow"><span class="t">${esc(m.name)}</span><br><span class="s">ещё не входил(а) в приложение</span></span></div>`).join("")}</div>
+    ${withW<2?`<div class="banner">Победитель будет, только если в этом месяце тренируются хотя бы двое.</div>`:""}
+    ${pw.length?`<div class="muted" style="font-size:14px">Победитель в ${MONTHS_P[pm.getMonth()]}: <b>${pw.map(m=>esc(m.name)).join(", ")}</b></div>`:""}
+  </div>`;
+}
+function feedItem(m,w,st){
+  const prs=(st.prByW[w.id]||[]);
+  const what=isGroup(w)?`${esc(w.kind||"групповое занятие")}, ${w.min||0} мин`:`тренировку «${esc(wTitle(w))}»`;
+  const sub=isGroup(w)?"групповое занятие":[w.finishedAt?fdur(new Date(w.finishedAt)-new Date(w.startedAt)):"",fmtInt(tonnage(w))+" кг"].filter(Boolean).join(" · ");
+  return `<button class="item feed" data-act="fam-w" data-uid="${esc(m.uid)}" data-id="${esc(w.id)}">${famAvatar(m)}
+    <span class="grow"><span class="ft"><b>${esc(m.name)}</b> ${did(m)} ${what}</span><span class="s">${relDay(w.startedAt)} · ${sub}</span>
+    ${prs.length?`<span class="prs">${prs.slice(0,2).map(x=>`<span class="pr">рекорд · ${esc(EXMAP[x.x]?EXMAP[x.x].n:x.n)} ${x.w>0?fmtKg(x.w)+"×"+x.r:x.r+" повт."}</span>`).join("")}${prs.length>2?`<span class="pr">+${prs.length-2}</span>`:""}</span>`:""}</span></button>`;
+}
+function vFamily(){
+  if(F.member)return vMember(F.member);
+  const head=`<div class="top"><div><div class="eyebrow">Все вместе</div><h1>Семья</h1></div>${accountBtn()}</div>`;
+  if(!sb||!C.user||C.allowed!==true)return `${head}<div class="stack"><div class="card stack"><h2>Семья видна после входа</h2><div class="muted">Здесь челлендж месяца, лента тренировок и профили всех, кто есть в списке семьи.</div>${sb&&!C.user?`<button class="btn primary full" data-act="login">Войти через Google</button>`:""}</div></div>`;
+  loadFam();
+  const ms=famMembers();
+  if(!ms.length)return `${head}<div class="stack"><div class="list"><div class="empty">${F.err==="offline"?"Нет сети. Семья загрузится, когда появится интернет.":F.err?"Не загрузилось. Попробую ещё раз.<br><br><button class='btn ghost sm' data-act='fam-reload'>Обновить</button>":"Загружаю семью…"}</div></div></div>`;
+  const stats=new Map(ms.filter(m=>m.uid).map(m=>[m.uid,famStats(m)]));
+  const feed=ms.filter(m=>m.uid).flatMap(m=>m.workouts.map(w=>({m,w}))).sort((a,b)=>b.w.startedAt.localeCompare(a.w.startedAt)).slice(0,30);
+  return `${head}<div class="stack">
+    ${F.err?`<div class="banner">${F.err==="offline"?"Нет сети: показываю то, что было загружено раньше.":"Не удалось обновить, показываю прошлые данные."}</div>`:""}
+    ${challengeCard(ms)}
+    <div class="section-title"><h2>Все участники</h2></div>
+    <div class="list">${ms.filter(m=>m.uid).map(m=>{const st=stats.get(m.uid);return `<button class="item" data-act="fam-open" data-uid="${esc(m.uid)}">${famAvatar(m)}
+      <span class="grow"><span class="t">${esc(m.name)}${m.me?" (ты)":""}</span><br><span class="s">уровень ${st.level.n} «${esc(st.level.name)}» · стрик ${st.streak} ${nedel(st.streak)} · медали ${Object.keys(st.medals).length}</span></span><span class="chev">›</span></button>`}).join("")}</div>
+    <div class="section-title"><h2>Лента</h2><button class="linkbtn" data-act="fam-reload" style="margin:0">${F.loading?"обновляю…":"обновить"}</button></div>
+    <div class="list">${feed.length?feed.map(x=>feedItem(x.m,x.w,stats.get(x.m.uid))).join(""):`<div class="empty">Здесь появятся тренировки всей семьи.</div>`}</div>
+    ${C.admin?`<button class="btn ghost full" data-act="account">Доступ: кто может входить</button>`:""}
+  </div>`;
+}
+function vMember(id){
+  const m=famById(id);if(!m){F.member=null;return vFamily()}
+  const st=famStats(m),ws=m.workouts;
+  return `<div class="top"><button class="btn ghost sm" data-act="fam-back">‹ Семья</button></div><div class="stack">
+    <div class="card row" style="gap:14px">${famAvatar(m,"xl")}<div style="min-width:0"><h2 style="font-size:22px">${esc(m.name)}${m.me?" (ты)":""}</h2>
+      <div class="muted" style="font-size:14px">${ws.length} трен. всего · в этом месяце ${m.month}${ws.length?"<br>последняя: "+relDay(ws[0].startedAt):""}</div></div></div>
+    ${ws.length?awardsSection(st,!m.me):`<div class="list"><div class="empty">Тренировок пока нет.</div></div>`}
+    ${ws.length?`<div class="section-title"><h2>История тренировок</h2></div>
+    <div class="list">${ws.slice(0,40).map(w=>{const sets=(w.exercises||[]).reduce((a,e)=>a+e.sets.filter(s=>s.done).length,0);return `<button class="item" data-act="fam-w" data-uid="${esc(m.uid)}" data-id="${esc(w.id)}">${wPlate(w,"sm")}
+      <span class="grow"><span class="t">${fdateL(w.startedAt)}</span><br><span class="s">${isGroup(w)?esc(w.kind||"Групповое")+" · "+(w.min||0)+" мин":esc(wTitle(w))+" · "+sets+" подх. · "+fmtInt(tonnage(w))+" кг"}</span></span><span class="chev">›</span></button>`}).join("")}</div>`:""}
+  </div>`;
+}
+// чужая тренировка: только посмотреть, без кнопки «Удалить»
+function showFamW(id,wid){
+  const m=famById(id),w=m&&m.workouts.find(x=>x.id===wid);if(!w)return;
+  if(m.me){showHist(wid);return}
+  sheet(`<div class="row">${famAvatar(m)}<div><div class="eyebrow">${esc(m.name)} · ${fdateL(w.startedAt)}</div><h1 style="font-size:20px">${esc(isGroup(w)?"Групповое: "+wTitle(w):wTitle(w))}</h1></div></div>
+  ${isGroup(w)?`<div class="kv"><div><b>${w.min||0}</b><span>минут</span></div><div><b>${esc(w.kind||"—")}</b><span>вид</span></div><div><b>+1</b><span>в челлендж</span></div></div>`:`<div class="kv"><div><b>${w.finishedAt?fdur(new Date(w.finishedAt)-new Date(w.startedAt)):"—"}</b><span>время</span></div><div><b>${w.exercises.reduce((a,e)=>a+e.sets.filter(s=>s.done).length,0)}</b><span>подходов</span></div><div><b>${fmtInt(tonnage(w))}</b><span>тоннаж, кг</span></div></div>
+  <div class="exlog">${exLog(w)}</div>`}
+  <button class="btn ghost full" data-act="close-sheet-btn">Закрыть</button>`);
 }
 /* окно «Красава» после тренировки и после группового занятия */
 function showSummary(w,before){
@@ -1609,7 +1746,7 @@ function showFinishAsk(){
 /* ---------- события ---------- */
 document.addEventListener("pointerdown",()=>{if(S.rest&&!S.rest.dim)S.rest.dimAt=Date.now()+DIM_AFTER},{passive:true});
 document.addEventListener("click",async ev=>{
-  const tabBtn=ev.target.closest("[data-tab]");if(tabBtn){S.tab=tabBtn.dataset.tab;closeSheet();render();window.scrollTo(0,0);return}
+  const tabBtn=ev.target.closest("[data-tab]");if(tabBtn){if(tabBtn.dataset.tab==="family"&&S.tab==="family")F.member=null;S.tab=tabBtn.dataset.tab;closeSheet();render();window.scrollTo(0,0);return}
   const go=ev.target.closest("[data-tab-go]");if(go){S.tab=go.dataset.tabGo;closeSheet();render();window.scrollTo(0,0);return}
   unlockAudio();
   if(S.active)wake(true);
@@ -1670,6 +1807,10 @@ document.addEventListener("click",async ev=>{
     case "discard":S.active=null;saveActive();stopRest();wake(false);closeSheet();$("#layer").innerHTML="";clearInterval(clockTick);render();toast("Тренировка отменена");break;
     case "close-sheet":case "close-sheet-btn":closeSheet();break;
     case "hist":showHist(t.dataset.id);break;
+    case "fam-open":F.member=t.dataset.uid;render();window.scrollTo(0,0);break;
+    case "fam-back":F.member=null;render();window.scrollTo(0,0);break;
+    case "fam-w":showFamW(t.dataset.uid,t.dataset.id);break;
+    case "fam-reload":loadFam(true);render();break;
     case "hist-del":showHist(t.dataset.id,true);break;
     case "hist-del-yes":deleteWorkout(t.dataset.id);closeSheet();render();toast("Тренировка удалена");break;
     case "backup":doBackup();break;
