@@ -280,7 +280,7 @@ select.inp{appearance:none;font-weight:600;background-image:linear-gradient(45de
 .prs{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}
 .pr{font-size:12px;font-weight:700;padding:3px 8px;border-radius:6px;background:color-mix(in srgb,var(--plate-c) 22%,transparent);color:var(--fg)}
 .figw{display:flex;flex:none;justify-content:center;align-items:flex-end;line-height:0}.figw img{height:100%;width:auto;max-width:none}.figw.sm{width:64px;height:110px}.figw.md{width:100px;height:150px}.figw.lg{height:230px;margin:0 auto}.figw.xs{width:34px;height:48px;overflow:hidden}
-.herorow{display:flex;gap:6px;overflow-x:auto;padding:2px 0 4px;scroll-snap-type:x proximity;-webkit-overflow-scrolling:touch}.herorow .hs{flex:none;width:64px;text-align:center;scroll-snap-align:center}.herorow img{height:90px;width:auto;max-width:64px;object-fit:contain;display:block;margin:0 auto}.herorow b{display:block;font-family:var(--f-num);font-size:15px}.herorow span{display:block;font-size:10.5px;color:var(--muted);line-height:1.1}.herorow .lock img{filter:grayscale(1) brightness(.35);opacity:.6}.herorow .cur b{color:var(--plate-b)}
+.herorow{display:flex;gap:6px;overflow-x:auto;padding:2px 0 4px;scroll-snap-type:x proximity;-webkit-overflow-scrolling:touch}.herorow .hs{flex:none;width:64px;text-align:center;scroll-snap-align:center}.herorow img{height:90px;width:auto;max-width:64px;object-fit:contain;display:block;margin:0 auto}.herorow b{display:block;font-family:var(--f-num);font-size:15px}.herorow span{display:block;font-size:10.5px;color:var(--muted);line-height:1.1}.herorow .q{display:grid;place-items:center;height:90px;margin:0 6px;border-radius:12px;background:var(--surface-2);color:var(--faint);font-style:normal;font-family:var(--f-display);font-weight:800;font-size:34px}.herorow .lock span,.herorow .lock b{color:var(--faint)}.herorow .cur b{color:var(--plate-b)}
 .lvup{display:flex;align-items:flex-end;justify-content:center;gap:10px;padding:4px 0}.lvup .figw:first-child{opacity:.45}.lvup .arr{font-size:28px;color:var(--muted);align-self:center}
 .like{display:flex;gap:12px;align-items:center;background:var(--surface-2);border-radius:14px;padding:10px 14px;font-size:15px;line-height:1.25}.like .e{font-size:34px;line-height:1}
 .set .cup{font-size:20px;line-height:1}
@@ -1599,7 +1599,7 @@ const heroSrc=(n,sex)=>`hero/${sex==="f"?"f":"m"}${Math.max(1,Math.min(HERO_MAX,
 function figFor(st,sex,cls){if(!HERO_READY)return "";const n=Math.max(1,Math.min(HERO_MAX,st.level.n));
   return `<span class="figw ${cls||""}"><img src="${heroSrc(n,sex)}" alt="Герой, стадия ${n}" loading="lazy" decoding="async"></span>`}
 function heroRow(st,sex){const cur=Math.min(HERO_MAX,st.level.n);
-  return `<div class="herorow" aria-label="Все стадии героя">${LEVELS.map(([f,nm],i)=>`<div class="hs${i+1<=cur?"":" lock"}${i+1===cur?" cur":""}"><img src="${heroSrc(i+1,sex)}" alt="" loading="lazy" decoding="async"><b>${i+1}</b><span>${esc(nm)}</span></div>`).join("")}</div>`}
+  return `<div class="herorow" aria-label="Все стадии героя">${LEVELS.map(([f,nm],i)=>`<div class="hs${i+1<=cur?"":" lock"}${i+1===cur?" cur":""}">${i+1<=cur?`<img src="${heroSrc(i+1,sex)}" alt="" loading="lazy" decoding="async">`:`<i class="q" aria-label="Откроется на уровне ${i+1}">?</i>`}<b>${i+1}</b><span>${esc(nm)}</span></div>`).join("")}</div>`}
 function levelBar(st){const L=st.level,pct=Math.max(0,Math.min(100,(st.points-L.from)/(L.to-L.from)*100));return `<div class="bar"><i style="width:${pct}%;background:var(--plate-b)"></i></div>`}
 function awardsCard(){
   if(!S.workouts.length)return "";
@@ -1616,7 +1616,7 @@ function awardsSection(st,other,sex){
   const recs=Object.entries(st.best).filter(([,b])=>b.w>0).sort((a,b)=>b[1].v-a[1].v).slice(0,8);
   return `<div class="card stack"><div class="row between"><h2>Награды</h2><span class="muted" style="font-size:13px">${fmtInt(st.points)} очков</span></div>
     ${HERO_READY?figFor(st,other?sex:S.prof.sex,"lg"):""}
-    <div class="row" style="gap:14px">${HERO_READY?"":`<span class="lvl num">${L.n}</span>`}<div class="grow" style="flex:1;min-width:0"><div class="t" style="font-weight:800">Уровень ${L.n} «${esc(L.name)}»</div>${levelBar(st)}<div class="muted" style="font-size:13px;margin-top:4px">До уровня ${L.n+1}${L.n<HERO_MAX?" (новая броня)":""}: ${fmtInt(L.to-st.points)} очков</div></div></div>
+    <div class="row" style="gap:14px">${HERO_READY?"":`<span class="lvl num">${L.n}</span>`}<div class="grow" style="flex:1;min-width:0"><div class="t" style="font-weight:800">Уровень ${L.n} «${esc(L.name)}»</div>${levelBar(st)}<div class="muted" style="font-size:13px;margin-top:4px">До уровня ${L.n+1}${L.n<HERO_MAX?" (новый облик)":""}: ${fmtInt(L.to-st.points)} очков</div></div></div>
     ${HERO_READY?heroRow(st,other?sex:S.prof.sex):""}
     <div class="kv"><div><b>${st.streak}</b><span>стрик, нед.</span></div><div><b>${st.bestStreak}</b><span>лучший стрик</span></div><div><b>${st.prs}</b><span>рекордов</span></div></div>
     <div class="kv"><div><b>${st.si||"—"}</b><span>индекс силы</span></div><div><b>${st.si&&st.si30?(st.si-st.si30>=0?"+":"")+(st.si-st.si30):"—"}</b><span>за 30 дней</span></div><div><b>${st.freezes} из ${FREEZE_MAX}</b><span>заморозки ❄️</span></div></div>
