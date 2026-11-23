@@ -279,6 +279,8 @@ select.inp{appearance:none;font-weight:600;background-image:linear-gradient(45de
 .feed .s{display:block;margin-top:2px}
 .prs{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}
 .pr{font-size:12px;font-weight:700;padding:3px 8px;border-radius:6px;background:color-mix(in srgb,var(--plate-c) 22%,transparent);color:var(--fg)}
+.figw{display:block;flex:none;line-height:0}.figw svg{width:100%;height:100%}.figw.sm{width:44px;height:72px}.figw.md{width:64px;height:104px}.figw.lg{width:96px;height:156px;margin:0 auto}.figw.xs{width:22px;height:36px}
+.lvup{display:flex;align-items:flex-end;justify-content:center;gap:10px;padding:4px 0}.lvup .figw:first-child{opacity:.45}.lvup .arr{font-size:28px;color:var(--muted);align-self:center}
 .awards{display:flex;flex-direction:column;gap:10px;width:100%;text-align:left}
 .awards .t{font-weight:800;font-size:18px;line-height:1.1}
 .lvl{display:grid;place-items:center;width:52px;height:52px;border-radius:50%;background:var(--plate-b);color:#fff;font-size:30px;flex:none;box-shadow:inset 0 0 0 3px color-mix(in srgb,#000 22%,var(--plate-b)),inset 0 0 0 5px color-mix(in srgb,#fff 18%,var(--plate-b))}
@@ -1109,7 +1111,7 @@ function vToday(){
   ${awardsCard()}
   ${goalCards()}
   ${cloudCard()}
-  <div class="muted num" style="text-align:center;font-size:11px"><span data-act="diag">версия 15 · ${C.user?cloudLabel():S.workouts.length?"данные только на телефоне":"данных пока нет"}</span>${S.diag?"<br>"+diag():""}</div>
+  <div class="muted num" style="text-align:center;font-size:11px"><span data-act="diag">версия 16 · ${C.user?cloudLabel():S.workouts.length?"данные только на телефоне":"данных пока нет"}</span>${S.diag?"<br>"+diag():""}</div>
   </div>`;
 }
 /* цели: вес тела, рекорд в упражнении, тренировок в неделю (ТЗ, раздел 2 «Мотивация») */
@@ -1507,7 +1509,7 @@ function drawOnb(){
     <div class="field"><label for="oName">Имя</label><input class="inp" id="oName" data-o="name" maxlength="30" value="${esc(d.name)}" autocomplete="given-name"></div>
     <div class="field"><label for="oNick">Как к тебе обращаться в приложении</label><input class="inp" id="oNick" data-o="nick" maxlength="20" value="${esc(d.nick)}" placeholder="${esc(d.name||"Чемпион")}"></div>
     <div class="chips">${[d.name,"Чемпион","Бро","Красотка","Богатырь","Зая"].filter(Boolean).map(v=>`<button class="chip" data-act="onb-nick" data-v="${esc(v)}" aria-pressed="${d.nick===v}">${esc(v)}</button>`).join("")}</div>`}
-  if(o.step===1){ok=!!d.sex;body=`<h1>Пол</h1><div class="muted">Нужен для стартовых весов и, позже, для человечка.</div>
+  if(o.step===1){ok=!!d.sex;body=`<h1>Пол</h1><div class="muted">Нужен для стартовых весов и для человечка.</div>
     <button class="big-opt" data-act="onb-sex" data-v="m" aria-pressed="${d.sex==="m"}"><div><div class="t">Мужской</div></div></button>
     <button class="big-opt" data-act="onb-sex" data-v="f" aria-pressed="${d.sex==="f"}"><div><div class="t">Женский</div><div class="s">Стартовые веса в шаблонах будут легче</div></div></button>`}
   if(o.step===2){body=`<h1>Вес тела и цель</h1><div class="muted">Можно пропустить и заполнить потом в профиле.</div>
@@ -1563,22 +1565,56 @@ function sheet(html){$("#modal").innerHTML=`<div class="scrim" data-act="close-s
 function closeSheet(){$("#modal").innerHTML=""}
 function exLog(w){return (w.exercises||[]).map(e=>{const d=e.sets.filter(s=>s.done);return `<div class="r"><span>${esc(e.n)}</span><span>${d.length?d.map(s=>fmtKg(s.w)+"×"+s.r).join(" · "):"пропущено"}</span></div>`}).join("")}
 /* ---------- награды: экраны ---------- */
+/* ---------- человечек (этап 7 ТЗ «Зал») ----------
+   5 стадий × 2 пола, стадия = уровень 1–5 (дальше остаётся 5-я). Майка цвета блина:
+   серая → зелёная 10 → жёлтая 15 → синяя 20 → красная 25. Рисуется кодом, без картинок. */
+function figSVG(stage,sex,mode){
+  const s=Math.max(1,Math.min(5,stage||1))-1, f=sex==="f", cx=60;
+  const P=["var(--steel-1)","var(--plate-g)","var(--plate-c)","var(--plate-b)","var(--plate-a)"];
+  const skin="var(--fg)", shirt=mode==="mono"?skin:P[s];
+  const sh=f?17+1.8*s:19+3.6*s, arm=f?7.5+1.3*s:8.5+2.3*s, waist=f?11.5+.4*s:15+.6*s, hip=f?18+.9*s:15.5+.5*s, leg=f?12+1.5*s:12+2.1*s;
+  const top=44, wy=96, hy=114, r=v=>+v.toFixed(1);
+  const L=cx-sh, R=cx+sh, del=arm/2+1.5+(f?.6:1.1)*s;
+  // руки: плечо → локоть → кисть, чуть в стороны, сильнее с объёмом
+  const ex=sh+4+(f?.8:1.6)*s, hx=sh+3+(f?.5:1)*s;
+  const armP=d=>`M${r(cx+d*sh)} ${top+6} L${r(cx+d*ex)} ${top+36} L${r(cx+d*hx)} ${top+64}`;
+  const lc=Math.max(hip-leg/2,leg/2+2.5);
+  const legP=d=>`M${r(cx+d*(lc-1))} ${hy-4} L${r(cx+d*(lc+1))} 152 L${r(cx+d*lc)} 186`;
+  const torso=`M${r(cx-8)} ${top-6} Q${r(L+4)} ${top-4} ${r(L)} ${top+6} Q${r(L-1+(f?2:0))} ${top+30} ${r(cx-waist)} ${wy} Q${r(cx-hip-1)} ${hy-6} ${r(cx-hip)} ${hy+4} L${r(cx+hip)} ${hy+4} Q${r(cx+hip+1)} ${hy-6} ${r(cx+waist)} ${wy} Q${r(R+1-(f?2:0))} ${top+30} ${r(R)} ${top+6} Q${r(R-4)} ${top-4} ${r(cx+8)} ${top-6} Z`;
+  const bic=s>=1?[-1,1].map(d=>`<ellipse cx="${r(cx+d*(sh+2.5+.9*s))}" cy="${top+21}" rx="${r(arm/2+.5+.55*s*(f?.5:1))}" ry="${r(7+s)}" fill="${skin}"/>`).join(""):"";
+  const lines=mode==="mono"?"var(--bg)":"rgba(0,0,0,.28)";
+  const det=(s>=2&&!f?`<path d="M${r(cx-sh+7)} ${top+19} Q${cx} ${top+25} ${r(cx+sh-7)} ${top+19} M${cx} ${top+22} V${wy-2}"/>`:"")+(s>=3?`<path d="M${r(cx-waist+5)} ${top+44} H${r(cx+waist-5)} M${r(cx-waist+5)} ${top+53} H${r(cx+waist-5)}"/>`:"");
+  const hair=f?`<path d="M${cx-12} 18 Q${cx} 2 ${cx+12} 18 Q${cx+17} 22 ${cx+20} 34 Q${cx+12} 32 ${cx+11} 24 Z" fill="${skin}"/>`:"";
+  return `<svg viewBox="0 0 120 196" class="fig" role="img" aria-label="Человечек, стадия ${s+1}">
+  <g stroke="${skin}" stroke-linecap="round" stroke-linejoin="round" fill="none">
+   <path d="${legP(-1)}" stroke-width="${r(leg)}"/><path d="${legP(1)}" stroke-width="${r(leg)}"/>
+   <path d="${armP(-1)}" stroke-width="${r(arm)}"/><path d="${armP(1)}" stroke-width="${r(arm)}"/>
+  </g>
+  ${bic}
+  <rect x="${cx-5}" y="${top-14}" width="10" height="12" rx="3" fill="${skin}"/>
+  <circle cx="${cx}" cy="20" r="13" fill="${skin}"/>${hair}
+  <circle cx="${r(L)}" cy="${top+6}" r="${r(del)}" fill="${skin}"/><circle cx="${r(R)}" cy="${top+6}" r="${r(del)}" fill="${skin}"/>
+  <path d="${torso}" fill="${shirt}"/>
+  <g stroke="${lines}" stroke-width="1.6" fill="none" stroke-linecap="round">${det}</g>
+  <path d="M${r(cx-hip)} ${hy+4} L${r(cx+hip)} ${hy+4} L${r(cx+hip+1)} ${hy+20} L${cx+2} ${hy+20} L${cx} ${hy+12} L${cx-2} ${hy+20} L${r(cx-hip-1)} ${hy+20} Z" fill="${mode==="mono"?skin:"var(--steel-3)"}"/>
+ </svg>`}
+function figFor(st,sex,cls){return `<span class="figw ${cls||""}">${figSVG(st.level.n,sex==="f"?"f":"m")}</span>`}
 function levelBar(st){const L=st.level,pct=Math.max(0,Math.min(100,(st.points-L.from)/(L.to-L.from)*100));return `<div class="bar"><i style="width:${pct}%;background:var(--plate-b)"></i></div>`}
 function awardsCard(){
   if(!S.workouts.length)return "";
   const st=calcStats(),L=st.level,got=Object.keys(st.medals).length;
   return `<button class="card awards" data-tab-go="profile" aria-label="Награды: уровень ${L.n}, стрик ${st.streak}">
-    <div class="row between"><div class="row" style="gap:12px"><span class="lvl num">${L.n}</span><div style="text-align:left"><div class="eyebrow">Уровень</div><div class="t">${esc(L.name)}</div></div></div>
+    <div class="row between"><div class="row" style="gap:12px">${figFor(st,S.prof.sex,"sm")}<div style="text-align:left"><div class="eyebrow">Уровень ${L.n}</div><div class="t">${esc(L.name)}</div></div></div>
     <div style="text-align:right"><div class="num" style="font-size:30px;line-height:1">${st.streak}</div><div class="eyebrow">${nedel(st.streak)} стрик</div></div></div>
     ${levelBar(st)}
     <div class="row between muted" style="font-size:13px"><span>${fmtInt(st.points)} очков · до уровня ${L.n+1}: ${fmtInt(L.to-st.points)}</span><span>медали ${got} из ${MEDALS.length} ›</span></div>
   </button>`;
 }
-function awardsSection(st,other){
+function awardsSection(st,other,sex){
   st=st||calcStats();const L=st.level;
   const recs=Object.entries(st.best).filter(([,b])=>b.w>0).sort((a,b)=>b[1].v-a[1].v).slice(0,8);
   return `<div class="card stack"><div class="row between"><h2>Награды</h2><span class="muted" style="font-size:13px">${fmtInt(st.points)} очков</span></div>
-    <div class="row" style="gap:12px"><span class="lvl num">${L.n}</span><div class="grow" style="flex:1;min-width:0"><div class="t" style="font-weight:800">Уровень ${L.n} «${esc(L.name)}»</div>${levelBar(st)}<div class="muted" style="font-size:13px;margin-top:4px">До уровня ${L.n+1}: ${fmtInt(L.to-st.points)} очков</div></div></div>
+    <div class="row" style="gap:14px">${figFor(st,other?sex:S.prof.sex,"md")}<div class="grow" style="flex:1;min-width:0"><div class="t" style="font-weight:800">Уровень ${L.n} «${esc(L.name)}»</div>${levelBar(st)}<div class="muted" style="font-size:13px;margin-top:4px">До уровня ${L.n+1}: ${fmtInt(L.to-st.points)} очков</div></div></div>
     <div class="kv"><div><b>${st.streak}</b><span>стрик, нед.</span></div><div><b>${st.bestStreak}</b><span>лучший стрик</span></div><div><b>${st.prs}</b><span>рекордов</span></div></div>
     <div class="muted" style="font-size:13px">Неделя засчитывается, когда сделано ${st.per} ${st.per===1?"тренировка":st.per<5?"тренировки":"тренировок"}${other?"":" (цель в «Цели» ниже)"}. На этой неделе: ${st.thisWeek} из ${st.per}.</div>
     <div class="medals">${MEDALS.map(m=>{const at=st.medals[m.id];return `<div class="mcell${at?"":" lock"}">${medalHtml(m,at)}<div class="mn">${esc(m.n)}</div><div class="ms">${at?fdate(at):esc(m.d)}</div></div>`}).join("")}</div>
@@ -1681,7 +1717,7 @@ function vFamily(){
     ${challengeCard(ms)}
     <div class="section-title"><h2>Все участники</h2></div>
     <div class="list">${ms.filter(m=>m.uid).map(m=>{const st=stats.get(m.uid);return `<button class="item" data-act="fam-open" data-uid="${esc(m.uid)}">${famAvatar(m)}
-      <span class="grow"><span class="t">${esc(m.name)}${m.me?" (ты)":""}</span><br><span class="s">уровень ${st.level.n} «${esc(st.level.name)}» · стрик ${st.streak} ${nedel(st.streak)} · медали ${Object.keys(st.medals).length}</span></span><span class="chev">›</span></button>`}).join("")}</div>
+      <span class="grow"><span class="t">${esc(m.name)}${m.me?" (ты)":""}</span><br><span class="s">уровень ${st.level.n} «${esc(st.level.name)}» · стрик ${st.streak} ${nedel(st.streak)} · медали ${Object.keys(st.medals).length}</span></span>${figFor(st,m.sex,"xs")}<span class="chev">›</span></button>`}).join("")}</div>
     <div class="section-title"><h2>Лента</h2><button class="linkbtn" data-act="fam-reload" style="margin:0">${F.loading?"обновляю…":"обновить"}</button></div>
     <div class="list">${feed.length?feed.map(x=>feedItem(x.m,x.w,stats.get(x.m.uid))).join(""):`<div class="empty">Здесь появятся тренировки всей семьи.</div>`}</div>
     ${C.admin?`<button class="btn ghost full" data-act="account">Доступ: кто может входить</button>`:""}
@@ -1693,7 +1729,7 @@ function vMember(id){
   return `<div class="top"><button class="btn ghost sm" data-act="fam-back">‹ Семья</button></div><div class="stack">
     <div class="card row" style="gap:14px">${famAvatar(m,"xl")}<div style="min-width:0"><h2 style="font-size:22px">${esc(m.name)}${m.me?" (ты)":""}</h2>
       <div class="muted" style="font-size:14px">${ws.length} трен. всего · в этом месяце ${m.month}${ws.length?"<br>последняя: "+relDay(ws[0].startedAt):""}</div></div></div>
-    ${ws.length?awardsSection(st,!m.me):`<div class="list"><div class="empty">Тренировок пока нет.</div></div>`}
+    ${ws.length?awardsSection(st,!m.me,m.sex):`<div class="list"><div class="empty">Тренировок пока нет.</div></div>`}
     ${ws.length?`<div class="section-title"><h2>История тренировок</h2></div>
     <div class="list">${ws.slice(0,40).map(w=>{const sets=(w.exercises||[]).reduce((a,e)=>a+e.sets.filter(s=>s.done).length,0);return `<button class="item" data-act="fam-w" data-uid="${esc(m.uid)}" data-id="${esc(w.id)}">${wPlate(w,"sm")}
       <span class="grow"><span class="t">${fdateL(w.startedAt)}</span><br><span class="s">${isGroup(w)?esc(w.kind||"Групповое")+" · "+(w.min||0)+" мин":esc(wTitle(w))+" · "+sets+" подх. · "+fmtInt(tonnage(w))+" кг"}</span></span><span class="chev">›</span></button>`}).join("")}</div>`:""}
@@ -1721,6 +1757,7 @@ function showSummary(w,before){
   <div class="phrase">${esc(info.phrase)}</div>
   ${grp?`<div class="kv"><div><b>${w.min}</b><span>минут</span></div><div><b>≈${fmtInt(info.kc)}</b><span>ккал</span></div><div><b>${st.thisWeek}</b><span>на этой неделе</span></div></div>`
   :`<div class="kv"><div><b>${fdur(workMin(w)*60000)}</b><span>время</span></div><div><b>${fmtInt(tonnage(w))}</b><span>тоннаж, кг</span></div><div><b>≈${fmtInt(info.kc)}</b><span>ккал</span></div></div>`}
+  ${lvUp&&st.level.n<=5?`<div class="lvup">${figFor(before,S.prof.sex,"md")}<span class="arr">→</span>${figFor(st,S.prof.sex,"md")}</div>`:""}
   <div class="gain"><span class="g1">+${dp} очков</span><span>Стрик: ${st.streak} ${nedel(st.streak)}</span><span>${lvUp?`<b>Новый уровень ${st.level.n} «${esc(st.level.name)}»!</b>`:`Уровень ${st.level.n} · до ${st.level.n+1}: ${fmtInt(st.level.to-st.points)}`}</span></div>
   ${st.thisWeek>=st.per&&before.thisWeek<st.per?`<div class="banner" style="border-left-color:var(--plate-b)">Неделя засчитана: ${st.thisWeek} из ${st.per}. +${PTS.week} очков.</div>`:""}
   ${prs.length?`<div><div class="pr" style="margin-bottom:4px">Новые рекорды</div><div class="exlog">${prs.map(p=>`<div class="r"><span>${esc(p.n)}</span><span>${p.w>0?fmtKg(p.w)+" кг × "+p.r:p.r+" повт."}</span></div>`).join("")}</div></div>`:""}
