@@ -641,7 +641,7 @@ async function onSession(session){
   C.meta={name,avatar:meta.avatar_url||meta.picture||null};
   if(!bindOwner(C.user.id)){render();return}
   sb.from("profiles").upsert({user_id:C.user.id,email,name:meta.full_name||meta.name||name,avatar_url:meta.avatar_url||meta.picture||null,updated_at:new Date().toISOString()}).then(()=>{});
-  render();syncNow();
+  render();syncNow();pushCheck().then(()=>render());
 }
 async function login(){
   if(!sb){toast("Облако не загрузилось. Проверь интернет");return}
@@ -650,7 +650,83 @@ async function login(){
   const {error}=await sb.auth.signInWithOAuth({provider:"google",options:{redirectTo:location.origin+location.pathname,queryParams:{prompt:"select_account"}}});
   if(error)toast("Не удалось открыть вход Google");
 }
-async function logout(){closeSheet();if(sb)await sb.auth.signOut().catch(()=>{});C.user=null;C.allowed=null;C.admin=false;C.pulled=false;C.state=sb?"out":"nolib";render();}
+async function logout(){closeSheet();await pushForget();if(sb)await sb.auth.signOut().catch(()=>{});C.user=null;C.allowed=null;C.admin=false;C.pulled=false;C.state=sb?"out":"nolib";render();}
+/* ---------- пуши (этап 6): подписка Web Push, сервер шлёт по расписанию (функция push в Supabase) ----------
+   Подписка хранится в таблице push_subs (видит только сам человек). Выключатель: profiles.data.push=false. */
+const VAPID_PUB="BLw2CectlUJmBaqEWW1M2ZgjdoSokAHtyeJ57gMmK9z8hg84otbybUYjxc_1WRd30_2N6GRfmqJf293F3ppze04";
+const PUSH={sub:null,checked:false,busy:false};
+const pushSupported=()=>"serviceWorker" in navigator&&"PushManager" in window&&"Notification" in window;
+const pushStandalone=()=>navigator.standalone===true||matchMedia("(display-mode: standalone)").matches;
+function pushState(){
+  if(!pushSupported())return pushStandalone()?"old":"browser";
+  if(Notification.permission==="denied")return "denied";
+  if(PUSH.sub&&Notification.permission==="granted")return S.prof.push===false?"off":"on";
+  return "ask";
+}
+function b64u(s){const p="=".repeat((4-s.length%4)%4);const r=atob((s+p).replace(/-/g,"+").replace(/_/g,"/"));return Uint8Array.from(r,c=>c.charCodeAt(0))}
+async function pushSave(sub){
+  if(!sb||!C.user||!C.allowed||!sub)return false;
+  const j=sub.toJSON();
+  const {error}=await sb.from("push_subs").upsert({endpoint:j.endpoint,user_id:C.user.id,p256dh:j.keys.p256dh,auth:j.keys.auth,ua:navigator.userAgent.slice(0,200),updated_at:new Date().toISOString()});
+  return !error;
+}
+async function pushCheck(){ // при каждом входе: узнаём, есть ли подписка, и обновляем её в облаке
+  if(!pushSupported())return;
+  try{const r=await navigator.serviceWorker.ready;PUSH.sub=await r.pushManager.getSubscription();
+    if(PUSH.sub&&Notification.permission==="granted")await pushSave(PUSH.sub);}catch(e){}
+  PUSH.checked=true;
+}
+async function pushEnable(){
+  if(PUSH.busy)return;
+  if(!C.user||!C.allowed){toast("Сначала войди через Google");return}
+  if(!pushSupported()){toast(pushStandalone()?"Нужен iOS 16.4 или новее":"Открой приложение с иконки на экране «Домой»");return}
+  PUSH.busy=true;
+  try{
+    const perm=await Notification.requestPermission();
+    if(perm!=="granted"){toast("Уведомления не разрешены");PUSH.busy=false;render();return}
+    const r=await navigator.serviceWorker.ready;
+    let sub=await r.pushManager.getSubscription();
+    if(!sub)sub=await r.pushManager.subscribe({userVisibleOnly:true,applicationServerKey:b64u(VAPID_PUB)});
+    PUSH.sub=sub;
+    if(!(await pushSave(sub))){toast("Не удалось сохранить подписку, проверь интернет");PUSH.busy=false;render();return}
+    if(S.prof.push===false){S.prof.push=true;saveProfile()}
+    toast("Уведомления включены");
+  }catch(e){toast("Не получилось включить уведомления")}
+  PUSH.busy=false;render();
+}
+function pushToggle(on){S.prof.push=!!on;saveProfile();toast(on?"Пуши включены":"Пуши выключены");render()}
+async function pushTest(){
+  if(!sb||!C.user)return;
+  toast("Отправляю пробный пуш…");
+  try{const {data,error}=await sb.functions.invoke("push",{body:{test:true}});
+    if(error||!data||!data.sent){toast(data&&data.error==="nosub"?"Подписка не найдена, включи уведомления заново":"Пуш не ушёл, попробуй позже");return}
+    toast("Отправлено. Сверни приложение: пуш придёт за пару секунд");
+  }catch(e){toast("Пуш не ушёл, попробуй позже")}
+}
+async function pushForget(){ // при выходе убираем подписку этого телефона, чтобы пуши не шли чужому
+  try{if(PUSH.sub&&sb&&C.user)await sb.from("push_subs").delete().eq("endpoint",PUSH.sub.endpoint);if(PUSH.sub)await PUSH.sub.unsubscribe()}catch(e){}
+  PUSH.sub=null;
+}
+function pushCard(){
+  const st=pushState();
+  const rm=S.prof.remind||{};
+  const sched=(rm.days&&rm.days.length)?"Напоминание: "+DOWS.filter(([d])=>rm.days.includes(d)).map(([,l])=>l).join(", ")+" в "+(rm.time||"19:00"):"Дни напоминаний не выбраны: придут только «отдыхай» и «давно не были»";
+  const what=`<div class="muted" style="font-size:13px">${esc(sched)}. «Отдыхай» через 3,5 часа после тренировки, «давно не были» после 7 дней без зала. Не больше 2 пушей в день.</div>`;
+  if(!C.user)return `<div class="muted" style="font-size:13px">Войди через Google, чтобы включить пуши.</div>`;
+  if(st==="browser")return `<div class="muted" style="font-size:13px">Пуши работают только из иконки на экране «Домой»: открой сайт в Safari → «Поделиться» → «На экран Домой».</div>`;
+  if(st==="old")return `<div class="muted" style="font-size:13px">Нужен iOS 16.4 или новее: Настройки → Основные → Обновление ПО.</div>`;
+  if(st==="denied")return `<div class="muted" style="font-size:13px">Уведомления запрещены. Включи: Настройки iPhone → Уведомления → Зал → Допуск уведомлений.</div>`;
+  if(st==="ask")return `${what}<button class="btn primary sm" data-act="push-on" ${PUSH.busy?"disabled":""}>Разрешить уведомления</button>`;
+  return `<div class="field"><label>Пуши</label><div class="seg"><button type="button" data-act="push-tg" data-v="1" aria-pressed="${st==="on"}">Включены</button><button type="button" data-act="push-tg" data-v="0" aria-pressed="${st==="off"}">Выключены</button></div></div>
+    ${st==="on"?what+`<button class="btn ghost sm" data-act="push-test">Прислать пробный пуш</button>`:""}`;
+}
+function pushNudge(){ // карточка на главной для тех, кто прошёл знакомство, но ещё не включил пуши
+  if(!C.user||!C.allowed||!PUSH.checked||!S.prof.onboarded||LS.get("zal_push_nudge",0))return "";
+  if(!pushSupported()||!pushStandalone()||pushState()!=="ask")return "";
+  return `<div class="card stack"><div class="row between"><h2>Напоминания о тренировках</h2><button class="linkbtn" data-act="push-nudge-x" aria-label="Скрыть">✕</button></div>
+    <div class="muted" style="font-size:14px">Пуш в день тренировки, «отдыхай» после зала. Не больше 2 в день, выключается в профиле.</div>
+    <button class="btn primary sm" data-act="push-on">Разрешить уведомления</button></div>`;
+}
 function accountBtn(){
   if(!sb)return "";
   if(!C.user)return `<button class="btn primary sm" data-act="login">Войти</button>`;
@@ -1012,6 +1088,7 @@ function vToday(){
   <div class="top"><div><div class="eyebrow">${DOW[d.getDay()]}, ${d.getDate()} ${MON[d.getMonth()]}</div><h1>${n?"Привет, "+esc(n):"Привет"}</h1></div>${accountBtn()}</div>
   <div class="stack">
   ${storeNote()}
+  ${S.active?"":pushNudge()}
   ${S.active?`<div class="card row between"><div><div class="eyebrow">Идёт тренировка</div><div style="font-weight:600">${esc(S.active.title||day(S.active.prog)?.title||"Тренировка")}</div></div><button class="btn primary sm" data-act="resume">Продолжить</button></div>`:""}
   ${p?`<div class="card next">
     <span class="plate lg p${pc(nk)}">${esc(nk)}</span>
@@ -1032,7 +1109,7 @@ function vToday(){
   ${awardsCard()}
   ${goalCards()}
   ${cloudCard()}
-  <div class="muted num" style="text-align:center;font-size:11px"><span data-act="diag">версия 14 · ${C.user?cloudLabel():S.workouts.length?"данные только на телефоне":"данных пока нет"}</span>${S.diag?"<br>"+diag():""}</div>
+  <div class="muted num" style="text-align:center;font-size:11px"><span data-act="diag">версия 15 · ${C.user?cloudLabel():S.workouts.length?"данные только на телефоне":"данных пока нет"}</span>${S.diag?"<br>"+diag():""}</div>
   </div>`;
 }
 /* цели: вес тела, рекорд в упражнении, тренировок в неделю (ТЗ, раздел 2 «Мотивация») */
@@ -1388,10 +1465,10 @@ function vProfile(){
     <div class="field"><label for="gRkg">Вес рекорда, кг (на 1 раз)</label><input class="inp num" id="gRkg" type="number" inputmode="decimal" step="2.5" min="1" max="500" value="${g.record?g.record.kg:""}"></div>
     <div class="field"><label for="gPer">Тренировок в неделю</label><select class="inp" id="gPer">${[1,2,3,4,5,6].map(n=>`<option value="${n}" ${(g.perWeek||3)===n?"selected":""}>${n}</option>`).join("")}</select></div>
     <button class="btn primary sm" type="submit">Сохранить цели</button></form>
-  <div class="card stack"><h2>Напоминания</h2>
+  <div class="card stack"><h2>Напоминания и пуши</h2>
     <div class="chips">${DOWS.map(([d,l])=>`<button class="chip" data-act="rm-day" data-d="${d}" aria-pressed="${(rm.days||[]).includes(d)}">${l}</button>`).join("")}</div>
     <div class="field"><label for="rmTime">Время</label><input class="inp" id="rmTime" type="time" value="${esc(rm.time||"19:00")}"></div>
-    <div class="muted" style="font-size:13px">Пока только сохраняется. Уведомления на iPhone включим на следующем этапе.</div></div>
+    ${pushCard()}</div>
   ${C.user?`<div class="card stack"><h2>Облако</h2><div class="muted" style="font-size:14px">${cloudLabel()}${q?" · ждут отправки: "+q:""}${C.lastSync?"<br>Последняя синхронизация: "+fdateL(C.lastSync)+" "+new Date(C.lastSync).toTimeString().slice(0,5):""}</div>
     <button class="btn ghost sm" data-act="sync">Синхронизировать сейчас</button>
     ${C.admin?`<button class="btn ghost sm" data-act="account">Семья: кто может входить</button>`:""}</div>`:cloudCard()}
@@ -1445,7 +1522,7 @@ function drawOnb(){
     ${S.program.days.length?`<button class="big-opt" data-act="onb-tpl" data-v="keep" aria-pressed="${d.tpl==="keep"}"><div><div class="t">Оставить мою программу</div><div class="s">${S.program.days.map(x=>esc(x.k)).join(" · ")} · как сейчас</div></div></button>`:""}
     ${Object.entries(TEMPLATES).map(([id,t])=>`<button class="big-opt" data-act="onb-tpl" data-v="${id}" aria-pressed="${d.tpl===id}"><div><div class="t">${esc(t.n)}${id===rec?'<span class="tag">советуем</span>':""}</div><div class="s">${esc(t.s)}</div></div></button>`).join("")}
     <button class="big-opt" data-act="onb-tpl" data-v="custom" aria-pressed="${d.tpl==="custom"}"><div><div class="t">Соберу сам(а)</div><div class="s">Начнёшь с пустой тренировки</div></div></button>`}
-  if(o.step===5){body=`<h1>Когда тренируешься?</h1><div class="muted">Для напоминаний. Уведомления включим на следующем этапе, пока просто запомним.</div>
+  if(o.step===5){body=`<h1>Когда тренируешься?</h1><div class="muted">В эти дни в это время придёт напоминание. Уведомления разрешишь после знакомства, в профиле или на главной.</div>
     <div class="chips">${DOWS.map(([n,l])=>`<button class="chip" data-act="onb-day" data-v="${n}" aria-pressed="${d.days.includes(n)}">${l}</button>`).join("")}</div>
     <div class="field"><label for="oTime">Время напоминания</label><input class="inp" id="oTime" data-o="time" type="time" value="${esc(d.time)}"></div>`}
   $("#onb").innerHTML=`<div class="onb"><div class="onb-in">${head}<div class="stack" style="flex:1">${body}</div>
@@ -1819,6 +1896,10 @@ document.addEventListener("click",async ev=>{
     case "bw-del":deleteBody(t.dataset.d);render();break;
     case "login":closeSheet();login();break;
     case "logout":logout();break;
+    case "push-on":pushEnable();break;
+    case "push-tg":pushToggle(t.dataset.v==="1");break;
+    case "push-test":pushTest();break;
+    case "push-nudge-x":LS.set("zal_push_nudge",1);render();break;
     case "own-yes":LS.set("zal_owner",C.user.id);S.workouts.forEach(w=>enqueue({k:"w",id:w.id}));S.body.forEach(b=>enqueue({k:"b",id:b.date}));if(LS.get("zal_program",null))enqueue({k:"p"});if(Object.keys(S.prof).length)enqueue({k:"pr"});closeSheet();render();syncNow().then(()=>toast("Перенесено в облако: "+S.workouts.length+" трен."));break;
     case "account":showAccount();break;
     case "sync":syncNow().then(()=>{if($("#famList"))showAccount();else if(S.tab==="profile")render()});break;
