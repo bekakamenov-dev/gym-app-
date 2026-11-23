@@ -10,11 +10,11 @@ create table if not exists public.push_subs (
 );
 create index if not exists push_subs_user on public.push_subs(user_id);
 alter table public.push_subs enable row level security;
--- подписку видит и меняет только сам человек (из списка семьи); остальным её не видно
-create policy push_subs_own_select on public.push_subs for select to authenticated using (user_id = auth.uid() and public.is_member());
-create policy push_subs_own_insert on public.push_subs for insert to authenticated with check (user_id = auth.uid() and public.is_member());
-create policy push_subs_own_update on public.push_subs for update to authenticated using (user_id = auth.uid()) with check (user_id = auth.uid() and public.is_member());
-create policy push_subs_own_delete on public.push_subs for delete to authenticated using (user_id = auth.uid());
+-- подписку видит и меняет только сам человек (из списка семьи, is_allowed()); остальным её не видно
+create policy push_subs_own_select on public.push_subs for select to authenticated using (user_id = (select auth.uid()) and (select is_allowed()));
+create policy push_subs_own_insert on public.push_subs for insert to authenticated with check (user_id = (select auth.uid()) and (select is_allowed()));
+create policy push_subs_own_update on public.push_subs for update to authenticated using (user_id = (select auth.uid())) with check (user_id = (select auth.uid()) and (select is_allowed()));
+create policy push_subs_own_delete on public.push_subs for delete to authenticated using (user_id = (select auth.uid()));
 
 create table if not exists public.push_log (
   id bigint generated always as identity primary key,
@@ -40,3 +40,8 @@ grant execute on function public.push_config() to service_role;
 
 create extension if not exists pg_net;
 create extension if not exists pg_cron;
+
+-- Ключи кладутся в Vault отдельно (не в репозитории):
+--   select vault.create_secret('<VAPID public>','zal_vapid_public'), vault.create_secret('<VAPID private>','zal_vapid_private'), vault.create_secret('<случайная строка>','zal_cron_secret');
+-- Расписание: раз в 15 минут вызывает функцию push
+select cron.schedule('zal-push','*/15 * * * *', $job$ select net.http_post(url:='https://qohiiyihgunufvephgsk.supabase.co/functions/v1/push', headers:=jsonb_build_object('Content-Type','application/json','x-cron-secret',(select decrypted_secret from vault.decrypted_secrets where name='zal_cron_secret')), body:='{}'::jsonb, timeout_milliseconds:=30000) $job$);

@@ -44,7 +44,7 @@ async function sendTo(uid: string, subs: Sub[], msg: { title: string; body: stri
     } catch (e) {
       const code = (e as { statusCode?: number }).statusCode;
       if (code === 404 || code === 410) await db.from("push_subs").delete().eq("endpoint", s.endpoint);
-      console.log("push fail", uid.slice(0, 8), code, String((e as Error).message || e).slice(0, 200));
+      console.log("push fail", uid.slice(0, 8), code, String((e as { body?: string }).body || (e as Error).message || e).slice(0, 200));
     }
   }
   return ok;
@@ -114,6 +114,11 @@ Deno.serve(async (req) => {
     const c = await config();
     if (req.headers.get("x-cron-secret")) {
       if (req.headers.get("x-cron-secret") !== c.cron) return json({ error: "forbidden" }, 403);
+      const b = await req.json().catch(() => ({}));
+      if (b.probe) { // служебная проверка шифрования и отправки на заданную подписку
+        try { const r = await webpush.sendNotification(b.probe, JSON.stringify({ title: "Зал", body: "probe" }), { TTL: 60 }); return json({ probe: r.statusCode }); }
+        catch (e) { return json({ probe: (e as { statusCode?: number }).statusCode ?? null, err: String((e as Error).message).slice(0, 100), body: String((e as { body?: string }).body || "").slice(0, 200) }); }
+      }
       return json(await runSchedule());
     }
     // пробный пуш от вошедшего пользователя
