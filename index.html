@@ -237,7 +237,7 @@ select.inp{appearance:none;font-weight:600;background-image:linear-gradient(45de
 .stepper button{height:100%;font-size:22px;color:var(--muted)}
 .stepper b{text-align:center;font-family:var(--f-num);font-size:26px}
 .grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-/* v13: награды, окно «Красава», медали */
+/* v13: награды, окно поздравления, медали */
 /* семья */
 .list.flat{background:none;border-radius:0}
 .list.flat .item{padding-inline:0}
@@ -259,22 +259,29 @@ select.inp{appearance:none;font-weight:600;background-image:linear-gradient(45de
 .like{display:flex;gap:12px;align-items:center;background:var(--surface-2);border-radius:14px;padding:10px 14px;font-size:15px;line-height:1.25}.like .e{font-size:34px;line-height:1}
 .set .cup{font-size:20px;line-height:1}
 .lvl{display:grid;place-items:center;width:52px;height:52px;border-radius:50%;background:var(--plate-b);color:#fff;font-size:30px;flex:none;box-shadow:inset 0 0 0 3px color-mix(in srgb,#000 22%,var(--plate-b)),inset 0 0 0 5px color-mix(in srgb,#fff 18%,var(--plate-b))}
-.medals{display:grid;grid-template-columns:repeat(3,1fr);gap:14px 8px}
-.mcell{display:flex;flex-direction:column;align-items:center;text-align:center;gap:4px;min-width:0}
-.mcell .mn{font-size:13px;font-weight:700;line-height:1.15}
-.mcell .ms{font-size:11.5px;color:var(--muted);line-height:1.2}
-.mcell.lock .mn{color:var(--muted)}
-.medal{--c:var(--plate-a);display:grid;place-items:center;width:54px;height:54px;border-radius:50%;background:var(--c);color:#fff;font-family:var(--f-display);font-weight:800;font-size:22px;line-height:1;flex:none;box-shadow:inset 0 0 0 3px color-mix(in srgb,#000 22%,var(--c)),inset 0 0 0 6px color-mix(in srgb,#fff 22%,var(--c))}
-.medal.lg{width:60px;height:60px;font-size:24px}
-.medal.mA{--c:var(--plate-a)}.medal.mB{--c:var(--plate-b)}.medal.mC{--c:var(--plate-c)}.medal.mD{--c:var(--plate-g)}.medal.mS{--c:var(--steel-3)}
-.medal.off{background:var(--surface-2);color:var(--faint);box-shadow:inset 0 0 0 2px var(--line)}
+.tracks{display:flex;flex-direction:column;gap:12px}
+.trk{display:flex;gap:12px;align-items:center}
+.trk .grow{flex:1;min-width:0}
+.trk .tn{font-weight:800;font-size:15px}
+.trk .tc{font-size:13px;color:var(--muted)}
+.trk .bar{height:7px;margin:5px 0 3px}
+.trk .ts{font-size:12.5px;color:var(--muted);line-height:1.2}
+.trk.lock .tn{color:var(--muted)}
+/* значок-награда: 3D-картинка на подставке цвета ступени, число на ленточке снизу */
+.badge{--c:#b87333;--c2:#7a4a22;position:relative;display:grid;place-items:center;width:60px;height:60px;border-radius:50%;flex:none;
+  background:radial-gradient(circle at 50% 35%,color-mix(in srgb,#fff 35%,var(--c)),var(--c) 55%,var(--c2));box-shadow:inset 0 0 0 3px color-mix(in srgb,#fff 25%,var(--c2)),0 2px 6px rgba(0,0,0,.25)}
+.badge img{width:78%;height:78%;object-fit:contain;filter:drop-shadow(0 2px 2px rgba(0,0,0,.3))}
+.badge b{position:absolute;bottom:-6px;left:50%;transform:translateX(-50%);min-width:26px;padding:1px 6px;border-radius:8px;background:#1e2124;color:#fff;font-family:var(--f-num);font-size:14px;font-weight:800;line-height:16px;text-align:center;box-shadow:0 0 0 2px var(--c)}
+.badge.silver{--c:#c9ced3;--c2:#7d858c}.badge.gold{--c:#f0c23b;--c2:#a87a10}.badge.plat{--c:#9fe0d8;--c2:#3c8f88}.badge.dia{--c:#b9a4ff;--c2:#5b3fc4}
+.badge.off{--c:var(--surface-2);--c2:var(--line);box-shadow:inset 0 0 0 2px var(--line)}.badge.off img{filter:grayscale(1);opacity:.35}.badge.off b{background:var(--faint)}
+.badge.lg{width:68px;height:68px}
 .phrase{font-size:17px;font-weight:600;color:var(--muted);margin-top:-4px}
 .gain{display:flex;flex-wrap:wrap;gap:6px 14px;font-size:14px;color:var(--muted)}
 .gain .g1{font-weight:800;color:var(--fg)}
 .newm{display:flex;flex-direction:column;gap:10px;background:var(--surface);border-radius:14px;padding:12px}
 .pts summary{cursor:pointer;font-size:14px;font-weight:700;color:var(--muted)}
 .storyimg{width:100%;max-width:300px;margin:0 auto;border-radius:12px;display:block;-webkit-touch-callout:default}
-@media (prefers-reduced-motion:no-preference){.newm .medal{animation:pop .5s ease-out}@keyframes pop{from{transform:scale(.5);opacity:0}to{transform:none;opacity:1}}}
+@media (prefers-reduced-motion:no-preference){.newm .badge{animation:pop .5s ease-out}@keyframes pop{from{transform:scale(.5);opacity:0}to{transform:none;opacity:1}}}
 /* v18: главная. Одна смелая деталь — герой на сцене: под ним пятно света цвета блина следующей тренировки.
    Всё остальное ужато: уровень, стрик и неделя в одной полосе, выбор A/B/C в одну строку. */
 .stage{position:relative;overflow:hidden;display:grid;grid-template-columns:112px 1fr;grid-template-rows:1fr auto auto;column-gap:14px;padding:16px 16px 14px 8px;
@@ -313,7 +320,7 @@ select.inp{appearance:none;font-weight:600;background-image:linear-gradient(45de
 .days .d.today .o:not(.done){border:2px solid var(--fg)}
 .wk .foot{display:flex;justify-content:space-between;gap:10px;font-size:14px;color:var(--muted)}
 .wk .foot b{color:var(--fg)}
-.ico{display:inline-block;width:16px;height:16px;vertical-align:-3px;margin-right:3px}
+.ico{display:inline-block;width:18px;height:18px;vertical-align:-4px;margin-right:3px;object-fit:contain}
 </style>
 
 </head>
@@ -881,26 +888,34 @@ function lastBest(x){let b=0;for(const w of S.workouts)for(const e of w.exercise
 /* ---------- награды (этап 4 ТЗ «Зал») ----------
    Очки, уровни, медали, рекорды и стрик нигде не хранятся: каждый раз считаются заново из тренировок
    (так одинаково у всех и пересчитывается по перенесённой истории). Победители месяца берутся из облака (zal_wins). */
-const PTS={workout:100,pr:25,week:50,medal:50};
+const PTS={workout:100,pr:25,week:50,medal:25};
 const LEVELS=[[0,"Новичок"],[500,"В деле"],[1500,"Регулярный"],[3500,"Крепкий"],[7000,"Силач"],[11000,"Атлет"],[15000,"Воин"],[19000,"Чемпион"],[23000,"Титан"],[27000,"Легенда"]];
 function levelFor(p){
   if(p<27000){let i=0;LEVELS.forEach(([f],k)=>{if(p>=f)i=k});return {n:i+1,name:LEVELS[i][1],from:LEVELS[i][0],to:LEVELS[i+1][0]}}
   const x=Math.floor((p-27000)/4000);return {n:10+x,name:"Легенда",from:27000+x*4000,to:27000+(x+1)*4000};
 }
-// ic — надпись на медали, c — цвет блина (A красный, B синий, C жёлтый, D зелёный, S сталь)
-const MEDALS=[
-  {id:"w1",n:"Первая тренировка",d:"Сделать первую тренировку",ic:"1",c:"A"},
-  {id:"w10",n:"10 тренировок",d:"10 тренировок или занятий",ic:"10",c:"A"},
-  {id:"w50",n:"50 тренировок",d:"50 тренировок или занятий",ic:"50",c:"A"},
-  {id:"w100",n:"100 тренировок",d:"100 тренировок или занятий",ic:"100",c:"A"},
-  {id:"s4",n:"Стрик 4 недели",d:"4 засчитанные недели подряд",ic:"4н",c:"B"},
-  {id:"s12",n:"Стрик 12 недель",d:"12 засчитанных недель подряд",ic:"12н",c:"B"},
-  {id:"pr1",n:"Первый рекорд",d:"Побить свой лучший результат в упражнении",ic:"PR",c:"C"},
-  {id:"ton",n:"Тонна за раз",d:"10 000 кг тоннажа за одну тренировку",ic:"10т",c:"S"},
-  {id:"goal",n:"Цель достигнута",d:"Дойти до цели по весу тела или рекорду",ic:"✓",c:"D"},
-  {id:"win",n:"Победитель месяца",d:"Больше всех тренировок в семье за месяц",ic:"№1",c:"C"},
-  {id:"grp10",n:"Групповой дух",d:"10 групповых занятий",ic:"Гр",c:"D"},
+/* награды-линейки (v20): у каждой линейки один 3D-значок (badges/*.webp) и ступени. Каждая ступень — отдельная медаль,
+   цвет подставки показывает уровень ступени: бронза → серебро → золото → платина → алмаз. За ступень PTS.medal очков. */
+const TRACKS=[
+  {id:"w",n:"Тренировки",ic:i=>["dumb","dumb","cup1","cup2","cup3"][i],steps:[1,5,10,25,50,100,150,250,365,500],d:"тренировок и занятий",u:v=>v},
+  {id:"s",n:"Недель подряд",ic:i=>i<3?"fire":"fire2",steps:[2,4,8,12,26,52],d:"засчитанных недель подряд",u:v=>v},
+  {id:"p",n:"Рекорды",ic:()=>"bolt",steps:[1,5,10,25,50,100],d:"личных рекордов",u:v=>v},
+  {id:"t",n:"Тоннаж",ic:()=>"eleph",steps:[10,50,100,250,500,1000],d:"тонн за всё время",u:v=>v+"т"},
+  {id:"si",n:"Индекс силы",ic:()=>"arm",steps:[150,200,250,300,350,400,500],d:"кг: присед + жим + становая",u:v=>v},
+  {id:"f",n:"Вместе с семьёй",ic:()=>"home",steps:[1,5,10,25,50],d:"дней, когда тренировались вместе с семьёй",u:v=>v},
+  {id:"v",n:"Разнообразие",ic:()=>"compass",steps:[10,20,30,45,65],d:"разных упражнений",u:v=>v},
+  {id:"g",n:"Групповые",ic:()=>"hands",steps:[1,5,10,25,50],d:"групповых занятий",u:v=>v},
+  {id:"m",n:"Победитель месяца",ic:()=>"crown",steps:[1,3,6,12],d:"побед в семье за месяц",u:v=>v},
+  {id:"goal",n:"Цель",ic:()=>"goal",steps:[1],d:"цель по весу или рекорду достигнута",u:v=>v},
 ];
+const TIERS=["bronze","silver","gold","plat","dia"];
+const tierOf=(t,i)=>TIERS[Math.min(4,Math.floor(i*5/Math.max(t.steps.length,5)))];
+const MEDAL_TOTAL=TRACKS.reduce((a,t)=>a+t.steps.length,0);
+const trackById=Object.fromEntries(TRACKS.map(t=>[t.id,t]));
+// медаль-ступень: {t, i} → картинка с подставкой цвета ступени и числом
+function badgeHtml(t,i,on,sz=""){const st=t.steps[i];
+  return `<span class="badge ${sz} ${on?tierOf(t,i):"off"}" aria-hidden="true"><img src="badges/${t.ic(i)}.webp" alt="" loading="lazy" decoding="async">${t.steps.length>1?`<b>${esc(String(t.u(st)))}</b>`:""}</span>`}
+const medalName=(t,i)=>t.steps.length>1?t.n+": "+t.u(t.steps[i]):t.n;
 const WEEK=7*864e5;
 const prevWeek=ws=>weekStart(ws-864e5);
 const nextWeek=ws=>weekStart(ws+8*864e5);
@@ -910,54 +925,59 @@ const SI_LIFTS={squat:"sq",smith_squat:"sq",bench_press:"bp",deadlift:"dl",sumo_
 // «сила» подхода для рекордов: с весом — расчётный максимум на 1 раз; без веса — повторы (меньше любого веса)
 const setScore=s=>s.w>0?e1rm(s.w,s.r):s.r*0.001;
 let statsCache={key:null,val:null};
+// дни (YYYY-MM-DD), когда тренировался кто-то из семьи, кроме uid: для линейки «Вместе с семьёй»
+function famDaysExcept(uid){const d=new Set();if(!F.data||!uid)return d;for(const m of F.data.members||[])if(m.uid&&m.uid!==uid)for(const w of m.workouts||[])d.add(w.startedAt.slice(0,10));return d}
 // o — чужие данные (вкладка «Семья»): {workouts, body, goals, wins}; без o — свои
 function calcStats(o){
-  const own=!o;o=o||{workouts:S.workouts,body:S.body,goals:goals(),wins:LS.get("zal_wins",[])};
+  const own=!o;o=o||{workouts:S.workouts,body:S.body,goals:goals(),wins:LS.get("zal_wins",[]),famDays:famDaysExcept(C.user&&C.user.id)};
   const g=o.goals||{},per=g.perWeek||3,wins=o.wins||[],BODY=o.body||[];
-  const key=[o.workouts,BODY,JSON.stringify(g),JSON.stringify(wins)];
+  const key=[o.workouts,BODY,JSON.stringify(g),JSON.stringify(wins),F.data];
   if(own&&statsCache.key&&statsCache.key.every((k,i)=>k===key[i]))return statsCache.val;
   const ws=[...o.workouts].sort((a,b)=>a.startedAt.localeCompare(b.startedAt));
-  const medals={},best={},prByW={},weekN={},counted=new Map();
-  let n=0,grp=0,prs=0;const main={sq:0,bp:0,dl:0},siByW={},siHist=[];
+  const medals={},best={},prByW={},weekN={},counted=new Map(),tv={};
+  let n=0,grp=0,prs=0,ton=0,tog=0;const seen=new Set(),famD=o.famDays||new Set(),togD=new Set();
+  // ступени линейки: всё, до чего дотянулось значение v, получает дату at
+  const reach=(id,v,at)=>{const t=trackById[id];tv[id]=Math.max(tv[id]||0,v);t.steps.forEach((x,i)=>{if(v>=x&&!medals[id+":"+i])medals[id+":"+i]=at})};const main={sq:0,bp:0,dl:0},siByW={},siHist=[];
   const give=(id,at)=>{if(!medals[id])medals[id]=at};
   for(const w of ws){
     n++;if(isGroup(w))grp++;
     const at=w.startedAt;
-    if(n===1)give("w1",at);if(n===10)give("w10",at);if(n===50)give("w50",at);if(n===100)give("w100",at);
-    if(grp===10)give("grp10",at);
-    if(!isGroup(w)&&tonnage(w)>=10000)give("ton",at);
+    reach("w",n,at);if(isGroup(w))reach("g",grp,at);
+    if(!isGroup(w)){ton+=tonnage(w);reach("t",Math.floor(ton/1000),at)}
+    const dk=at.slice(0,10);if(famD.has(dk)&&!togD.has(dk)){togD.add(dk);reach("f",togD.size,at)}
     const list=[];
     for(const e of w.exercises||[]){
       const d=e.sets.filter(s=>s.done&&s.r>0);if(!d.length)continue;
       const top=d.reduce((a,s)=>setScore(s)>setScore(a)?s:a);
       const sc=setScore(top),prev=best[e.x];
-      if(prev&&sc>prev.v*(1+1e-6)+1e-9){list.push({x:e.x,n:e.n,w:top.w,r:top.r});prs++;give("pr1",at)}
+      if(prev&&sc>prev.v*(1+1e-6)+1e-9){list.push({x:e.x,n:e.n,w:top.w,r:top.r});prs++;reach("p",prs,at)}
+      if(!seen.has(e.x)){seen.add(e.x);reach("v",seen.size,at)}
       if(!prev||sc>prev.v)best[e.x]={v:sc,w:top.w,r:top.r,date:at,n:e.n};
-      if(g.record&&g.record.x===e.x&&top.w>0&&e1rm(top.w,top.r)>=+g.record.kg)give("goal",at);
+      if(g.record&&g.record.x===e.x&&top.w>0&&e1rm(top.w,top.r)>=+g.record.kg)give("goal:0",at);
       const mk=SI_LIFTS[e.x];if(mk&&top.w>0)main[mk]=Math.max(main[mk],e1rm(top.w,top.r));
     }
-    siByW[w.id]=Math.round(main.sq+main.bp+main.dl);siHist.push([at,siByW[w.id]]);
+    siByW[w.id]=Math.round(main.sq+main.bp+main.dl);reach("si",siByW[w.id],at);siHist.push([at,siByW[w.id]]);
     if(list.length)prByW[w.id]=list;
     const wk=weekStart(new Date(at).getTime());weekN[wk]=(weekN[wk]||0)+1;
     if(weekN[wk]===per)counted.set(wk,at);
   }
   // цель по весу тела: первая запись, где вес дошёл до цели (в сторону от первой записи)
   if(g.weight&&BODY.length){const t=+g.weight,b=[...BODY].sort((a,c)=>a.date.localeCompare(c.date)),first=b[0].kg;
-    if(Math.abs(first-t)>=0.15){const hit=b.find(x=>first>t?x.kg<=t+0.05:x.kg>=t-0.05);if(hit){const at=hit.date+"T12:00:00";if(!medals.goal||at<medals.goal)medals.goal=at}}}
-  for(const x of wins){const at=x.at;if(!medals.win||at<medals.win)medals.win=at}
+    if(Math.abs(first-t)>=0.15){const hit=b.find(x=>first>t?x.kg<=t+0.05:x.kg>=t-0.05);if(hit){const at=hit.date+"T12:00:00";if(!medals["goal:0"]||at<medals["goal:0"])medals["goal:0"]=at}}}
+  [...wins].sort((a,b)=>String(a.at).localeCompare(String(b.at))).forEach((x,i)=>reach("m",i+1,x.at));
   // текущий стрик: эта неделя ещё идёт, поэтому если она не засчитана, считаем с прошлой
   /* стрик с заморозками (идея из Onlyfits): за каждые 4 засчитанные недели подряд даётся заморозка (копится до 2).
      Если прошедшая неделя не засчитана, заморозка тратится сама и стрик не рвётся (очков за такую неделю нет). */
   let run=0,bestRun=0,fr=0,since=0;const frozen=[],cw=weekStart();
   if(ws.length)for(let wk=weekStart(new Date(ws[0].startedAt).getTime());wk<=cw;wk=nextWeek(wk)){
-    if(counted.has(wk)){run++;since++;bestRun=Math.max(bestRun,run);const at=counted.get(wk);if(run===4)give("s4",at);if(run===12)give("s12",at);if(since===4){since=0;if(fr<FREEZE_MAX)fr++}}
+    if(counted.has(wk)){run++;since++;bestRun=Math.max(bestRun,run);const at=counted.get(wk);reach("s",run,at);if(since===4){since=0;if(fr<FREEZE_MAX)fr++}}
     else if(wk<cw){if(run>0&&fr>0){fr--;frozen.push(wk)}else{run=0;since=0}}
   }
   const cur=run,si=Math.round(main.sq+main.bp+main.dl),ago=new Date(Date.now()-30*864e5).toISOString();
   let si30=0;for(const [at,v] of siHist)if(at<=ago)si30=v;
   const mc=Object.keys(medals).length;
   const points=n*PTS.workout+prs*PTS.pr+counted.size*PTS.week+mc*PTS.medal;
-  const val={n,grp,prs,points,level:levelFor(points),medals,prByW,best,streak:cur,bestStreak:bestRun,freezes:fr,frozen,si,si30,siByW,weeks:counted.size,per,thisWeek:weekN[weekStart()]||0,wins:wins.length};
+  const val={n,grp,prs,points,tv,ton,level:levelFor(points),medals,prByW,best,streak:cur,bestStreak:bestRun,freezes:fr,frozen,si,si30,siByW,weeks:counted.size,per,thisWeek:weekN[weekStart()]||0,wins:wins.length};
   if(own)statsCache={key,val};return val;
 }
 /* «поднял как слон» (идея из Onlyfits): тоннаж тренировки сравниваем с предметом */
@@ -979,32 +999,70 @@ function workMin(w){
 }
 function kcal(w){const met=isGroup(w)?(MET[w.kind]||5):5;return Math.round(met*bodyKgAt(w.startedAt)*workMin(w)/60/10)*10}
 /* мотивационные фразы: одна на тренировку (по её id, чтобы в окне и на картинке была одна и та же) */
-const PHRASES=[
-  "Ещё один кирпич в фундамент.",
-  "Сегодня ты сильнее, чем вчера.",
-  "Дисциплина сильнее настроения. Сегодня это снова видно.",
-  "Гриф помнит тех, кто приходит регулярно.",
-  "Мышцы растут на отдыхе. Поешь, выспись, вернись.",
-  "Не быстро, а каждую неделю. Так и строится сила.",
-  "Тренировка в копилке. Через год скажешь себе спасибо.",
-  "Работа сделана. Можно гордиться собой.",
-  "Каждый подход приближает к цели. Сегодня шагов было много.",
-  "Сильный не тот, кто не устаёт, а тот, кто приходит снова.",
-  "Слово, данное себе, сдержано.",
-  "Тело запоминает. Продолжай в том же темпе.",
-  "Плюс одна тренировка, минус одна отговорка.",
-  "Дети смотрят на пример. Сегодня он был хороший.",
-  "Ровно, спокойно, без травм. Так и надо.",
-  "Сегодняшний пот станет завтрашним рекордом.",
-  "Вода, белок, сон, и следующая будет ещё лучше.",
-  "Не идеально, но сделано. А сделано лучше идеального.",
-  "Сила приходит к тем, кто не пропускает.",
-  "Так держать! Стрик сам себя не сделает.",
-];
-function phraseFor(id){let h=0;for(const ch of String(id))h=(h*31+ch.charCodeAt(0))>>>0;return PHRASES[h%PHRASES.length]}
+/* поздравления после тренировки (v20): с юмором, отдельно для мужчин и женщин.
+   Выбор по id тренировки, поэтому в окне и на картинке для сторис фраза одна и та же. */
+const TITLES={
+  m:["Зверь","Мощь","Железо сдалось","Гриф просит пощады","Вот это мужчина","Сделано","Машина","Богатырь","Сила","Чемпион растёт","Танк","Легенда зала"],
+  f:["Умница","Огонь","Королева зала","Вот это сила","Гантели в восхищении","Сделано","Богиня","Звезда зала","Сила","Чемпионка растёт","Красота и мощь","Легенда зала"]};
+const PHRASES={
+  m:["Диван звонил. Сказали, что ты занят.",
+    "Мышцы записали в дневник: «Сегодня было серьёзно».",
+    "Штанга теперь тебя уважает. Холодильник тоже, держись.",
+    "Плюс одна тренировка, минус одна отговорка.",
+    "Где-то заплакал один пропущенный понедельник.",
+    "Футболка стала чуть теснее. Это не стирка.",
+    "Лень подала в отставку. Причина: ты.",
+    "Железо тяжёлое, а ты всё равно его поднял. Логика сильных.",
+    "Завтра будет болеть. Это мышцы так говорят спасибо.",
+    "Ты пришёл, поднял, ушёл. Как настоящий ниндзя.",
+    "Гантели обсуждают тебя в раздевалке. С уважением.",
+    "Сегодняшний ты сделал бы вчерашнего себя одной левой.",
+    "Дети смотрят на пример. Сегодня пример был что надо.",
+    "Чемпионы тоже начинали с «ну ладно, схожу».",
+    "Отговорки остались в машине. Пусть там и сидят.",
+    "Белок, вода, сон. Остальное ты уже сделал.",
+    "Тренировка в копилке. Через год скажешь себе спасибо.",
+    "Твой герой стал на тренировку ближе к новому облику.",
+    "Не идеально, но сделано. А сделано лучше идеального.",
+    "Кто-то смотрит мотивацию в телефоне. Ты её делаешь.",
+    "Мышцы растут на отдыхе. Сегодня можно лениться законно.",
+    "Шкаф больше не боится переезда: есть кому нести."],
+  f:["Диван звонил. Сказали, что ты занята.",
+    "Зеркало в раздевалке уже готовит комплимент.",
+    "Тренировка сделана, корона поправлена.",
+    "Ты сильнее, чем твоё «завтра начну».",
+    "Где-то заплакал один пропущенный понедельник.",
+    "Лень подала в отставку. Причина: ты.",
+    "Пакеты из магазина теперь носятся в одной руке.",
+    "Завтра будет болеть. Это мышцы так говорят спасибо.",
+    "Гантели обсуждают тебя в раздевалке. С уважением.",
+    "Пришла, сделала, ушла красивая. Классика.",
+    "Сегодняшняя ты сделала бы вчерашнюю одной левой.",
+    "Дети смотрят на пример. Сегодня пример был что надо.",
+    "Отговорки остались дома. Пусть там и сидят.",
+    "Вода, белок, сон. Остальное ты уже сделала.",
+    "Тренировка в копилке. Через год скажешь себе спасибо.",
+    "Твоя героиня стала на тренировку ближе к новому облику.",
+    "Не идеально, но сделано. А сделано лучше идеального.",
+    "Кто-то смотрит мотивацию в телефоне. Ты её делаешь.",
+    "Сила, грация и немного упрямства. Идеальный рецепт.",
+    "Платье сказало: «Продолжай в том же духе».",
+    "Ты не устала, ты просто зарядилась наоборот.",
+    "Каблуки, штанга, жизнь: ты справляешься со всем."]};
+const PR_LINES={m:["Новый рекорд. Штанга в шоке, тренер в восторге.","Новый рекорд! Вес не знал, с кем связался.","Рекорд побит. Старый ты нервно курит в сторонке.","Новый рекорд. Запиши дату, внукам расскажешь."],
+  f:["Новый рекорд. Штанга в шоке, тренер в восторге.","Новый рекорд! Вес не знал, с кем связался.","Рекорд побит. Вчерашняя ты аплодирует стоя.","Новый рекорд. Запиши дату, это красиво."]};
+const LVL_LINES={m:["Новый уровень! Твой герой сходил переодеться.","Новый уровень! Герой примеряет новую форму."],f:["Новый уровень! Твоя героиня сходила переодеться.","Новый уровень! Героиня примеряет новый образ."]};
+const GRP_LINES={m:["Засчитано. Тренер запомнил тебя в лицо.","Группа сделана. Коврик сказал спасибо.","Засчитано. Ты был не самым громким, но самым упорным."],
+  f:["Засчитано. Тренер запомнила тебя в лицо.","Группа сделана. Коврик сказал спасибо.","Засчитано. Ты была не самой громкой, но самой упорной."]};
+const sexKey=()=>S.prof.sex==="f"?"f":"m";
+const hashPick=(arr,id,salt="")=>{let h=0;for(const ch of String(id)+salt)h=(h*31+ch.charCodeAt(0))>>>0;return arr[h%arr.length]};
+const titleFor=id=>hashPick(TITLES[sexKey()],id,"t");
+// фраза: новый уровень важнее рекорда, рекорд важнее группового, иначе обычная
+function phraseFor(id,o={}){const k=sexKey();
+  if(o.lvUp)return hashPick(LVL_LINES[k],id);if(o.pr)return hashPick(PR_LINES[k],id);if(o.grp)return hashPick(GRP_LINES[k],id);
+  return hashPick(PHRASES[k],id)}
 const fmtInt=n=>String(Math.round(n)).replace(/\B(?=(\d{3})+(?!\d))/g," ");
 const nedel=n=>{const a=n%10,b=n%100;return a===1&&b!==11?"неделя":a>=2&&a<=4&&(b<10||b>=20)?"недели":"недель"};
-function medalHtml(m,at,sz=""){return `<span class="medal ${sz} ${at?"m"+m.c:"off"}" aria-hidden="true">${esc(m.ic)}</span>`}
 // счёт тренировок по месяцам: {"2026-11":{user_id:N}}; before — только раньше этой даты (ISO)
 function monthCounts(rows,before){const by={};for(const r of rows){const d=new Date(r.started_at);if(before&&d>=new Date(before))continue;const m=d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0");(by[m]=by[m]||{})[r.user_id]=(by[m][r.user_id]||0)+1}return by}
 function winsFor(by,uid){const wins=[];
@@ -1130,11 +1188,11 @@ function vToday(){
   ${S.active?"":pushNudge()}
   ${S.active?`<div class="card row between"><div><div class="eyebrow">Идёт тренировка</div><div style="font-weight:600">${esc(S.active.title||day(S.active.prog)?.title||"Тренировка")}</div></div><button class="btn primary sm" data-act="resume">Продолжить</button></div>`:""}
   ${p?nextCard(nk,planK,p):(C.user&&C.allowed&&!S.prof.onboarded?`<div class="card stack"><h2>Давай познакомимся</h2><div class="muted">Пара вопросов, и приложение подберёт тебе программу.</div><button class="btn primary full" data-act="onb-again">Начать знакомство</button></div>`:`<div class="card stack"><h2>Программы пока нет</h2><div class="muted">${C.user?"Собери свою тренировку или выбери готовый шаблон.":"Войди через Google, ответь на пару вопросов, и приложение подберёт программу."}</div>${C.user?`<button class="btn primary full" data-tab-go="program">Открыть программу</button>`:`<button class="btn primary full" data-act="login">Войти через Google</button>`}</div>`)}
-  <div class="wpick" role="group" aria-label="Выбрать тренировку">${ks.length>1?ks.map(k=>{const ld=lastDone(k);return `<button class="wp" data-act="pick" data-k="${esc(k)}" aria-current="${k===nk}"><span class="plate p${pc(k)}">${esc(k)}</span><span class="s">${ld?fshort(ld):"ещё не было"}</span></button>`}).join(""):""}<button class="wp add" data-act="group" aria-label="Добавить групповое занятие">＋ Группа</button></div>
+  ${p?`<div class="wpick" role="group" aria-label="Выбрать тренировку">${ks.length>1?ks.map(k=>{const ld=lastDone(k);return `<button class="wp" data-act="pick" data-k="${esc(k)}" aria-current="${k===nk}"><span class="plate p${pc(k)}">${esc(k)}</span><span class="s">${ld?fshort(ld):"ещё не было"}</span></button>`}).join(""):""}<button class="wp add" data-act="group" aria-label="Добавить групповое занятие">＋ Группа</button></div>`:""}
   ${weekCard()}
   ${goalCards()}
   ${cloudCard()}
-  <div class="muted num" style="text-align:center;font-size:11px"><span data-act="diag">версия 19 · ${C.user?cloudLabel():S.workouts.length?"данные только на телефоне":"данных пока нет"}</span>${S.diag?"<br>"+diag():""}</div>
+  <div class="muted num" style="text-align:center;font-size:11px"><span data-act="diag">версия 20 · ${C.user?cloudLabel():S.workouts.length?"данные только на телефоне":"данных пока нет"}</span>${S.diag?"<br>"+diag():""}</div>
   </div>`;
 }
 /* v18: главная «Сцена»: герой рядом со следующей тренировкой, под ним свет цвета её блина */
@@ -1149,12 +1207,12 @@ function nextCard(nk,planK,p){
     <button class="linkbtn" data-act="preview" data-k="${esc(nk)}">Упражнения и веса</button>
   </div>`;
 }
-const IC={fire:`<svg class="ico" viewBox="0 0 16 16" aria-hidden="true"><path fill="var(--plate-a)" d="M8 1c1 3 4 4.5 4 8.5A4 4 0 0 1 4 9.5C4 7 5.5 6 6 4c.8 1 1 2 1 3 1-1.5 1.2-4 1-6z"/></svg>`,
-  snow:`<svg class="ico" viewBox="0 0 16 16" aria-hidden="true"><path stroke="#7fb4d8" stroke-width="1.6" stroke-linecap="round" fill="none" d="M8 1.5v13M2.4 4.75l11.2 6.5M2.4 11.25l11.2-6.5"/></svg>`};
+const IC={fire:`<img class="ico" src="badges/fire.webp" alt="">`,
+  snow:`<img class="ico" src="badges/snow.webp" alt="">`};
 // на этой неделе — день недели («ср»), раньше — дата
 const fshort=iso=>new Date(iso).getTime()>=weekStart()?DOW[new Date(iso).getDay()]:fdate(iso);
 function weekCard(){
-  if(!S.workouts.length)return "";
+  if(!S.workouts.length&&!S.program.days.length)return "";
   const st=calcStats(),L=st.level,ws=weekStart(),today=new Date();today.setHours(0,0,0,0);
   const days=[0,1,2,3,4,5,6].map(i=>{const t=new Date(ws);t.setDate(t.getDate()+i);
     const w=S.workouts.find(x=>{const d=new Date(x.startedAt);d.setHours(0,0,0,0);return d.getTime()===t.getTime()});
@@ -1177,7 +1235,7 @@ function goalCards(){
   const g=goals(),out=[];
   if(g.perWeek){const c=weekCount();out.push(`<div class="card goal"><div class="row between"><h2>Тренировок на этой неделе</h2><span class="num" style="font-size:26px">${c} из ${g.perWeek}</span></div>
     <div class="weekdots">${Array.from({length:g.perWeek},(_,i)=>`<i class="${i<c?"on":""}"></i>`).join("")}</div>
-    <div class="muted" style="font-size:13px">${c>=g.perWeek?"Неделя засчитана. Красава!":"Осталось "+(g.perWeek-c)+". Групповые занятия тоже считаются."}</div></div>`)}
+    <div class="muted" style="font-size:13px">${c>=g.perWeek?"Неделя засчитана. Так держать!":"Осталось "+(g.perWeek-c)+". Групповые занятия тоже считаются."}</div></div>`)}
   if(g.record&&g.record.x&&g.record.kg){const bb=bestE1rm(g.record.x),kg=+g.record.kg,pct=bb?Math.min(100,bb.v/kg*100):0;
     out.push(`<div class="card goal"><div class="row between"><h2>Цель: ${esc(exName(g.record.x))} ${fmtKg(kg)} кг</h2><span class="num">${bb?fmtKg(Math.round(bb.v*2)/2):"—"} кг</span></div>
     <div class="bar"><i style="width:${pct}%"></i></div>
@@ -1567,7 +1625,7 @@ function drawOnb(){
     <div class="field"><label for="oName">Имя</label><input class="inp" id="oName" data-o="name" maxlength="30" value="${esc(d.name)}" autocomplete="given-name"></div>
     <div class="field"><label for="oNick">Как к тебе обращаться в приложении</label><input class="inp" id="oNick" data-o="nick" maxlength="20" value="${esc(d.nick)}" placeholder="${esc(d.name||"Чемпион")}"></div>
     <div class="chips">${[d.name,"Чемпион","Бро","Красотка","Богатырь","Зая"].filter(Boolean).map(v=>`<button class="chip" data-act="onb-nick" data-v="${esc(v)}" aria-pressed="${d.nick===v}">${esc(v)}</button>`).join("")}</div>`}
-  if(o.step===1){ok=!!d.sex;body=`<h1>Пол</h1><div class="muted">Нужен для стартовых весов и для человечка.</div>
+  if(o.step===1){ok=!!d.sex;body=`<h1>Пол</h1><div class="muted">Нужен для стартовых весов и для твоего героя.</div>
     <button class="big-opt" data-act="onb-sex" data-v="m" aria-pressed="${d.sex==="m"}"><div><div class="t">Мужской</div></div></button>
     <button class="big-opt" data-act="onb-sex" data-v="f" aria-pressed="${d.sex==="f"}"><div><div class="t">Женский</div><div class="s">Стартовые веса в шаблонах будут легче</div></div></button>`}
   if(o.step===2){body=`<h1>Вес тела и цель</h1><div class="muted">Можно пропустить и заполнить потом в профиле.</div>
@@ -1633,6 +1691,14 @@ function figFor(st,sex,cls){if(!HERO_READY)return "";const n=Math.max(1,Math.min
 function heroRow(st,sex){const cur=Math.min(HERO_MAX,st.level.n);
   return `<div class="herorow" aria-label="Все стадии героя">${LEVELS.map(([f,nm],i)=>`<div class="hs${i+1<=cur?"":" lock"}${i+1===cur?" cur":""}">${i+1<=cur?`<img src="${heroSrc(i+1,sex)}" alt="" loading="lazy" decoding="async">`:`<i class="q" aria-label="Откроется на уровне ${i+1}">?</i>`}<b>${i+1}</b><span>${esc(nm)}</span></div>`).join("")}</div>`}
 function levelBar(st){const L=st.level,pct=Math.max(0,Math.min(100,(st.points-L.from)/(L.to-L.from)*100));return `<div class="bar"><i style="width:${pct}%;background:var(--plate-b)"></i></div>`}
+function trackRow(t,st){
+  let got=-1;t.steps.forEach((x,i)=>{if(st.medals[t.id+":"+i])got=i});
+  const v=st.tv[t.id]||0,nx=got+1<t.steps.length?t.steps[got+1]:null;
+  const pct=nx==null?100:Math.max(0,Math.min(100,v/nx*100));
+  const sub=nx==null?"Все ступени пройдены":t.id==="goal"?"Поставь цель и дойди до неё":`${fmtInt(v)} из ${fmtInt(nx)} ${t.d}`;
+  return `<div class="trk${got<0?" lock":""}">${badgeHtml(t,Math.max(got,0),got>=0)}
+    <div class="grow"><div class="row between"><span class="tn">${esc(t.n)}</span><span class="tc">${got+1} из ${t.steps.length}</span></div>
+    <div class="bar"><i style="width:${pct}%;background:var(--plate-c)"></i></div><div class="ts">${esc(sub)}</div></div></div>`}
 function awardsSection(st,other,sex){
   st=st||calcStats();const L=st.level;
   const recs=Object.entries(st.best).filter(([,b])=>b.w>0).sort((a,b)=>b[1].v-a[1].v).slice(0,8);
@@ -1641,14 +1707,14 @@ function awardsSection(st,other,sex){
     <div class="row" style="gap:14px">${HERO_READY?"":`<span class="lvl num">${L.n}</span>`}<div class="grow" style="flex:1;min-width:0"><div class="t" style="font-weight:800">Уровень ${L.n} «${esc(L.name)}»</div>${levelBar(st)}<div class="muted" style="font-size:13px;margin-top:4px">До уровня ${L.n+1}${L.n<HERO_MAX?" (новый облик)":""}: ${fmtInt(L.to-st.points)} очков</div></div></div>
     ${HERO_READY?heroRow(st,other?sex:S.prof.sex):""}
     <div class="kv"><div><b>${st.streak}</b><span>стрик, нед.</span></div><div><b>${st.bestStreak}</b><span>лучший стрик</span></div><div><b>${st.prs}</b><span>рекордов</span></div></div>
-    <div class="kv"><div><b>${st.si||"—"}</b><span>индекс силы</span></div><div><b>${st.si&&st.si30?(st.si-st.si30>=0?"+":"")+(st.si-st.si30):"—"}</b><span>за 30 дней</span></div><div><b>${st.freezes} из ${FREEZE_MAX}</b><span>заморозки ❄️</span></div></div>
+    <div class="kv"><div><b>${st.si||"—"}</b><span>индекс силы</span></div><div><b>${st.si&&st.si30?(st.si-st.si30>=0?"+":"")+(st.si-st.si30):"—"}</b><span>за 30 дней</span></div><div><b>${st.freezes} из ${FREEZE_MAX}</b><span>заморозки</span></div></div>
     <div class="muted" style="font-size:13px">Неделя засчитывается, когда сделано ${st.per} ${st.per===1?"тренировка":st.per<5?"тренировки":"тренировок"}${other?"":" (цель в «Цели» ниже)"}. На этой неделе: ${st.thisWeek} из ${st.per}.</div>
-    <div class="medals">${MEDALS.map(m=>{const at=st.medals[m.id];return `<div class="mcell${at?"":" lock"}">${medalHtml(m,at)}<div class="mn">${esc(m.n)}</div><div class="ms">${at?fdate(at):esc(m.d)}</div></div>`}).join("")}</div>
+    <div class="tracks">${TRACKS.map(t=>trackRow(t,st)).join("")}</div>
     <details class="pts"><summary>За что очки, индекс силы, заморозки</summary><div class="exlog" style="margin-top:8px">
       <div class="r"><span>Тренировка или групповое занятие</span><span>${PTS.workout}</span></div>
       <div class="r"><span>Новый рекорд в упражнении</span><span>${PTS.pr}</span></div>
       <div class="r"><span>Засчитанная неделя стрика</span><span>${PTS.week}</span></div>
-      <div class="r"><span>Медаль</span><span>${PTS.medal}</span></div>
+      <div class="r"><span>Каждая ступень награды</span><span>${PTS.medal}</span></div>
       <div class="r"><span>Уровни</span><span>500 · 1 500 · 3 500 · 7 000, дальше каждые +4 000</span></div></div>
       <div class="muted" style="font-size:13px;margin-top:8px"><b>Индекс силы</b>: сумма лучших расчётных максимумов на 1 раз в приседе, жиме лёжа и становой, как сумма в троеборье. Растёт вместе с рабочими весами.<br><b>Заморозка стрика</b>: даётся за каждые 4 засчитанные недели подряд, копится до 2. Если неделя не засчитана (болезнь, поездка), заморозка тратится сама и стрик не обнуляется.</div></details>
   </div>
@@ -1700,7 +1766,7 @@ const famById=id=>famMembers().find(m=>m.uid===id);
 const did=m=>m.sex==="f"?"сделала":m.sex==="m"?"сделал":"сделал(а)";
 function famAvatar(m,cls=""){return m.photo?`<span class="avatar ${cls}"><img src="${esc(m.photo)}" alt="" referrerpolicy="no-referrer"></span>`:`<span class="avatar ${cls}">${esc((m.name||"?")[0].toUpperCase())}</span>`}
 function relDay(iso){const n=daysSince(iso);return n===0?"сегодня":n===1?"вчера":fdateL(iso)}
-function famStats(m){return m.me?calcStats():calcStats({workouts:m.workouts,body:m.body,goals:m.goals,wins:m.wins})}
+function famStats(m){return m.me?calcStats():calcStats({workouts:m.workouts,body:m.body,goals:m.goals,wins:m.wins,famDays:famDaysExcept(m.uid)})}
 function challengeCard(ms){
   const now=new Date(),left=new Date(now.getFullYear(),now.getMonth()+1,0).getDate()-now.getDate();
   const act=ms.filter(m=>m.uid).sort((a,b)=>b.month-a.month||a.name.localeCompare(b.name));
@@ -1744,7 +1810,7 @@ function vFamily(){
     ${challengeCard(ms)}
     <div class="section-title"><h2>Все участники</h2></div>
     <div class="list">${ms.filter(m=>m.uid).map(m=>{const st=stats.get(m.uid);return `<button class="item" data-act="fam-open" data-uid="${esc(m.uid)}">${famAvatar(m)}
-      <span class="grow"><span class="t">${esc(m.name)}${m.me?" (ты)":""}</span><br><span class="s">уровень ${st.level.n} «${esc(st.level.name)}» · стрик ${st.streak} ${nedel(st.streak)} · медали ${Object.keys(st.medals).length}</span></span>${figFor(st,m.sex,"xs")}<span class="chev">›</span></button>`}).join("")}</div>
+      <span class="grow"><span class="t">${esc(m.name)}${m.me?" (ты)":""}</span><br><span class="s">уровень ${st.level.n} «${esc(st.level.name)}» · стрик ${st.streak} ${nedel(st.streak)} · наград ${Object.keys(st.medals).length}</span></span>${figFor(st,m.sex,"xs")}<span class="chev">›</span></button>`}).join("")}</div>
     <div class="section-title"><h2>Лента</h2><button class="linkbtn" data-act="fam-reload" style="margin:0">${F.loading?"обновляю…":"обновить"}</button></div>
     <div class="list">${feed.length?feed.map(x=>feedItem(x.m,x.w,stats.get(x.m.uid))).join(""):`<div class="empty">Здесь появятся тренировки всей семьи.</div>`}</div>
     ${C.admin?`<button class="btn ghost full" data-act="account">Доступ: кто может входить</button>`:""}
@@ -1771,25 +1837,26 @@ function showFamW(id,wid){
   <div class="exlog">${exLog(w)}</div>`}
   <button class="btn ghost full" data-act="close-sheet-btn">Закрыть</button>`);
 }
-/* окно «Красава» после тренировки и после группового занятия */
+/* окно поздравления после тренировки и после группового занятия */
 function showSummary(w,before){
   const st=calcStats(),grp=isGroup(w);
   const prs=st.prByW[w.id]||[];
-  const newM=MEDALS.filter(m=>st.medals[m.id]&&!before.medals[m.id]);
+  // новые ступени: из каждой линейки показываем только самую высокую
+  const newM=TRACKS.map(t=>{let hi=-1;t.steps.forEach((x,i)=>{if(st.medals[t.id+":"+i]&&!before.medals[t.id+":"+i])hi=i});return hi<0?null:{t,i:hi,n:medalName(t,hi)}}).filter(Boolean);
   const dp=st.points-before.points,lvUp=st.level.n>before.level.n;
   const sets=(w.exercises||[]).reduce((a,e)=>a+e.sets.filter(s=>s.done).length,0);
-  const info={w,grp,prs,newM,dp,st,lvUp,sets,kc:kcal(w),phrase:phraseFor(w.id),nick:nick(),like:grp?null:liftLike(tonnage(w)),dsi:(st.si||0)-(before.si||0),frz:(st.freezes||0)>(before.freezes||0)};
+  const info={w,grp,prs,newM,dp,st,lvUp,sets,kc:kcal(w),phrase:phraseFor(w.id,{lvUp,pr:prs.length>0,grp}),title:titleFor(w.id),nick:nick(),like:grp?null:liftLike(tonnage(w)),dsi:(st.si||0)-(before.si||0),frz:(st.freezes||0)>(before.freezes||0)};
   S.story={info,file:null,url:null};makeStory(info).catch(()=>{});
-  sheet(`<div class="row">${wPlate(w)}<div><div class="eyebrow">${grp?"Засчитано":"Тренировка сохранена"} · ${esc(wTitle(w))}</div><h1 style="font-size:30px!important">Красава${info.nick?", "+esc(info.nick):""}!</h1></div></div>
+  sheet(`<div class="row">${wPlate(w)}<div><div class="eyebrow">${grp?"Засчитано":"Тренировка сохранена"} · ${esc(wTitle(w))}</div><h1 style="font-size:30px!important">${esc(info.title)}${info.nick?", "+esc(info.nick):""}!</h1></div></div>
   <div class="phrase">${esc(info.phrase)}</div>
   ${grp?`<div class="kv"><div><b>${w.min}</b><span>минут</span></div><div><b>≈${fmtInt(info.kc)}</b><span>ккал</span></div><div><b>${st.thisWeek}</b><span>на этой неделе</span></div></div>`
   :`<div class="kv"><div><b>${fdur(workMin(w)*60000)}</b><span>время</span></div><div><b>${fmtInt(tonnage(w))}</b><span>тоннаж, кг</span></div><div><b>≈${fmtInt(info.kc)}</b><span>ккал</span></div></div>`}
-  ${info.like?`<div class="like"><span class="e">${info.like.e}</span><span>Ты поднял <b>${fmtInt(tonnage(w))} кг</b>, это ${esc(info.like.txt)}</span></div>`:""}
+  ${info.like?`<div class="like"><span class="e">${info.like.e}</span><span>Ты ${S.prof.sex==="f"?"подняла":"поднял"} <b>${fmtInt(tonnage(w))} кг</b>, это ${esc(info.like.txt)}</span></div>`:""}
   ${HERO_READY&&lvUp&&st.level.n<=HERO_MAX?`<div class="lvup">${figFor(before,S.prof.sex,"md")}<span class="arr">→</span>${figFor(st,S.prof.sex,"md")}</div>`:""}
   <div class="gain"><span class="g1">+${dp} очков</span><span>Стрик: ${st.streak} ${nedel(st.streak)}</span><span>${lvUp?`<b>Новый уровень ${st.level.n} «${esc(st.level.name)}»!</b>`:`Уровень ${st.level.n} · до ${st.level.n+1}: ${fmtInt(st.level.to-st.points)}`}</span>${info.dsi>0?`<span>Индекс силы +${info.dsi} (${st.si})</span>`:""}${info.frz?`<span>❄️ +1 заморозка стрика</span>`:""}</div>
   ${st.thisWeek>=st.per&&before.thisWeek<st.per?`<div class="banner" style="border-left-color:var(--plate-b)">Неделя засчитана: ${st.thisWeek} из ${st.per}. +${PTS.week} очков.</div>`:""}
   ${prs.length?`<div><div class="pr" style="margin-bottom:4px">Новые рекорды</div><div class="exlog">${prs.map(p=>`<div class="r"><span>${esc(p.n)}</span><span>${p.w>0?fmtKg(p.w)+" кг × "+p.r:p.r+" повт."}</span></div>`).join("")}</div></div>`:""}
-  ${newM.length?`<div class="newm">${newM.map(m=>`<div class="row" style="gap:12px">${medalHtml(m,1,"lg")}<div><div class="eyebrow">Новая медаль</div><div style="font-weight:800">${esc(m.n)}</div></div></div>`).join("")}</div>`:""}
+  ${newM.length?`<div class="newm">${newM.map(m=>`<div class="row" style="gap:12px">${badgeHtml(m.t,m.i,true,"lg")}<div><div class="eyebrow">Новая награда</div><div style="font-weight:800">${esc(m.n)}</div></div></div>`).join("")}</div>`:""}
   ${grp?"":`<details class="pts"><summary>Все подходы</summary><div class="exlog" style="margin-top:8px">${exLog(w)}</div></details>`}
   ${!grp&&nextKey()?`<div class="muted" style="font-size:13px">Следующая по плану: ${esc(day(nextKey()).title)}. Веса приложение подставит само.</div>`:""}
   <button class="btn primary full" data-act="story">Картинка для сторис</button>
@@ -1817,7 +1884,7 @@ async function makeStory(info){
   x.textAlign="left";x.textBaseline="alphabetic";
   const d=new Date(info.w.startedAt);
   x.fillStyle=mu;x.font=`700 44px ${B}`;x.fillText("ЗАЛ · "+DOW[d.getDay()]+", "+d.getDate()+" "+MON[d.getMonth()]+" "+d.getFullYear(),80,150);
-  x.fillStyle=fg;fitText(x,"КРАСАВА"+(info.nick?",":"!"),`800 {s}px ${D}`,250,W-150);x.fillText("КРАСАВА"+(info.nick?",":"!"),72,690);
+  x.fillStyle=fg;fitText(x,info.title.toUpperCase()+(info.nick?",":"!"),`800 {s}px ${D}`,250,W-150);x.fillText(info.title.toUpperCase()+(info.nick?",":"!"),72,690);
   let y=690;
   if(info.nick){x.fillStyle=plateCol;fitText(x,info.nick.toUpperCase()+"!",`800 {s}px ${D}`,200,W-160);x.fillText(info.nick.toUpperCase()+"!",72,y+190);y+=190}
   x.fillStyle=mu;x.font=`700 52px ${B}`;x.fillText(wTitle(info.w),80,y+90);y+=90;
@@ -1831,8 +1898,8 @@ async function makeStory(info){
   x.font=`800 54px ${B}`;x.fillStyle="#3f78ea";x.fillText("Уровень "+info.st.level.n+" «"+info.st.level.name+"»",80,y);
   x.fillStyle=mu;x.font=`700 44px ${B}`;x.fillText("Стрик "+info.st.streak+" "+nedel(info.st.streak)+" · +"+info.dp+" очков",80,y+66);y+=150;
   if(info.like){x.fillStyle=fg;fitText(x,info.like.e+" "+fmtInt(tonnage(info.w))+" кг, это "+info.like.txt,`700 {s}px ${B}`,52,W-160);x.fillText(info.like.e+" "+fmtInt(tonnage(info.w))+" кг, это "+info.like.txt,80,y);y+=110}
-  x.fillStyle=fg;x.font=`600 50px ${B}`;y=wrapText(x,"«"+info.phrase+"»",80,y,W-160,64)+120;
-  const lines=[...info.prs.slice(0,3).map(p=>["Рекорд",p.n+(p.w>0?" "+fmtKg(p.w)+"×"+p.r:" "+p.r+" повт."),"#e4b12a"]),...info.newM.slice(0,2).map(m=>["Медаль",m.n,"#46b06a"])];
+  x.fillStyle=fg;x.font=`600 50px ${B}`;y=wrapText(x,info.phrase,80,y,W-160,64)+120;
+  const lines=[...info.prs.slice(0,3).map(p=>["Рекорд",p.n+(p.w>0?" "+fmtKg(p.w)+"×"+p.r:" "+p.r+" повт."),"#e4b12a"]),...info.newM.slice(0,2).map(m=>["Награда",m.n,"#46b06a"])];
   for(const [k,v,col] of lines.slice(0,Math.max(0,Math.floor((H-40-y)/90)+1))){x.fillStyle=col;roundRect(x,80,y-46,170,60,12);x.fill();x.fillStyle="#1e2124";x.font=`800 36px ${B}`;x.fillText(k,98,y-4);
     x.fillStyle=fg;fitText(x,v,`700 {s}px ${B}`,44,W-160-200);x.fillText(v,272,y-2);y+=90}
   const blob=await new Promise(r=>c.toBlob(r,"image/png"));c.remove();

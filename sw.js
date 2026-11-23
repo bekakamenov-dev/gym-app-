@@ -1,6 +1,7 @@
 // Кэш для работы без интернета в зале. При изменении файлов увеличь номер версии.
-const CACHE = "zal-v19";
-const FILES = ["./", "index.html", "manifest.webmanifest", "icon-180.png", "icon-192.png", "icon-512.png", "supabase.js"];
+const CACHE = "zal-v20";
+const FILES = ["./", "index.html", "manifest.webmanifest", "icon-180.png", "icon-192.png", "icon-512.png", "supabase.js",
+  "badges/arm.webp", "badges/bolt.webp", "badges/compass.webp", "badges/crown.webp", "badges/cup1.webp", "badges/cup2.webp", "badges/cup3.webp", "badges/dumb.webp", "badges/eleph.webp", "badges/fire.webp", "badges/fire2.webp", "badges/goal.webp", "badges/hands.webp", "badges/home.webp", "badges/snow.webp"];
 self.addEventListener("install", e => {
   e.waitUntil(caches.open(CACHE).then(c => Promise.all(FILES.map(f => fetch(new Request(f, { cache: "reload" })).then(r => c.put(f, r))))));
   self.skipWaiting();
