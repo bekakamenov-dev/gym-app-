@@ -237,7 +237,7 @@ select.inp{appearance:none;font-weight:600;background-image:linear-gradient(45de
 .stepper button{height:100%;font-size:22px;color:var(--muted)}
 .stepper b{text-align:center;font-family:var(--f-num);font-size:26px}
 .grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-/* v13: награды, окно «Красава», медали */
+/* v13: награды, окно поздравления, медали */
 /* семья */
 .list.flat{background:none;border-radius:0}
 .list.flat .item{padding-inline:0}
@@ -999,29 +999,68 @@ function workMin(w){
 }
 function kcal(w){const met=isGroup(w)?(MET[w.kind]||5):5;return Math.round(met*bodyKgAt(w.startedAt)*workMin(w)/60/10)*10}
 /* мотивационные фразы: одна на тренировку (по её id, чтобы в окне и на картинке была одна и та же) */
-const PHRASES=[
-  "Ещё один кирпич в фундамент.",
-  "Сегодня ты сильнее, чем вчера.",
-  "Дисциплина сильнее настроения. Сегодня это снова видно.",
-  "Гриф помнит тех, кто приходит регулярно.",
-  "Мышцы растут на отдыхе. Поешь, выспись, вернись.",
-  "Не быстро, а каждую неделю. Так и строится сила.",
-  "Тренировка в копилке. Через год скажешь себе спасибо.",
-  "Работа сделана. Можно гордиться собой.",
-  "Каждый подход приближает к цели. Сегодня шагов было много.",
-  "Сильный не тот, кто не устаёт, а тот, кто приходит снова.",
-  "Слово, данное себе, сдержано.",
-  "Тело запоминает. Продолжай в том же темпе.",
-  "Плюс одна тренировка, минус одна отговорка.",
-  "Дети смотрят на пример. Сегодня он был хороший.",
-  "Ровно, спокойно, без травм. Так и надо.",
-  "Сегодняшний пот станет завтрашним рекордом.",
-  "Вода, белок, сон, и следующая будет ещё лучше.",
-  "Не идеально, но сделано. А сделано лучше идеального.",
-  "Сила приходит к тем, кто не пропускает.",
-  "Так держать! Стрик сам себя не сделает.",
-];
-function phraseFor(id){let h=0;for(const ch of String(id))h=(h*31+ch.charCodeAt(0))>>>0;return PHRASES[h%PHRASES.length]}
+/* поздравления после тренировки (v20): с юмором, отдельно для мужчин и женщин.
+   Выбор по id тренировки, поэтому в окне и на картинке для сторис фраза одна и та же. */
+const TITLES={
+  m:["Зверь","Мощь","Железо сдалось","Гриф просит пощады","Вот это мужчина","Сделано","Машина","Богатырь","Сила","Чемпион растёт","Танк","Легенда зала"],
+  f:["Умница","Огонь","Королева зала","Вот это сила","Гантели в восхищении","Сделано","Богиня","Звезда зала","Сила","Чемпионка растёт","Красота и мощь","Легенда зала"]};
+const PHRASES={
+  m:["Диван звонил. Сказали, что ты занят.",
+    "Мышцы записали в дневник: «Сегодня было серьёзно».",
+    "Штанга теперь тебя уважает. Холодильник тоже, держись.",
+    "Плюс одна тренировка, минус одна отговорка.",
+    "Где-то заплакал один пропущенный понедельник.",
+    "Футболка стала чуть теснее. Это не стирка.",
+    "Лень подала в отставку. Причина: ты.",
+    "Железо тяжёлое, а ты всё равно его поднял. Логика сильных.",
+    "Завтра будет болеть. Это мышцы так говорят спасибо.",
+    "Ты пришёл, поднял, ушёл. Как настоящий ниндзя.",
+    "Гантели обсуждают тебя в раздевалке. С уважением.",
+    "Сегодняшний ты сделал бы вчерашнего себя одной левой.",
+    "Дети смотрят на пример. Сегодня пример был что надо.",
+    "Чемпионы тоже начинали с «ну ладно, схожу».",
+    "Отговорки остались в машине. Пусть там и сидят.",
+    "Белок, вода, сон. Остальное ты уже сделал.",
+    "Тренировка в копилке. Через год скажешь себе спасибо.",
+    "Твой герой стал на тренировку ближе к новому облику.",
+    "Не идеально, но сделано. А сделано лучше идеального.",
+    "Кто-то смотрит мотивацию в телефоне. Ты её делаешь.",
+    "Мышцы растут на отдыхе. Сегодня можно лениться законно.",
+    "Шкаф больше не боится переезда: есть кому нести."],
+  f:["Диван звонил. Сказали, что ты занята.",
+    "Зеркало в раздевалке уже готовит комплимент.",
+    "Тренировка сделана, корона поправлена.",
+    "Ты сильнее, чем твоё «завтра начну».",
+    "Где-то заплакал один пропущенный понедельник.",
+    "Лень подала в отставку. Причина: ты.",
+    "Пакеты из магазина теперь носятся в одной руке.",
+    "Завтра будет болеть. Это мышцы так говорят спасибо.",
+    "Гантели обсуждают тебя в раздевалке. С уважением.",
+    "Пришла, сделала, ушла красивая. Классика.",
+    "Сегодняшняя ты сделала бы вчерашнюю одной левой.",
+    "Дети смотрят на пример. Сегодня пример был что надо.",
+    "Отговорки остались дома. Пусть там и сидят.",
+    "Вода, белок, сон. Остальное ты уже сделала.",
+    "Тренировка в копилке. Через год скажешь себе спасибо.",
+    "Твоя героиня стала на тренировку ближе к новому облику.",
+    "Не идеально, но сделано. А сделано лучше идеального.",
+    "Кто-то смотрит мотивацию в телефоне. Ты её делаешь.",
+    "Сила, грация и немного упрямства. Идеальный рецепт.",
+    "Платье сказало: «Продолжай в том же духе».",
+    "Ты не устала, ты просто зарядилась наоборот.",
+    "Каблуки, штанга, жизнь: ты справляешься со всем."]};
+const PR_LINES={m:["Новый рекорд. Штанга в шоке, тренер в восторге.","Новый рекорд! Вес не знал, с кем связался.","Рекорд побит. Старый ты нервно курит в сторонке.","Новый рекорд. Запиши дату, внукам расскажешь."],
+  f:["Новый рекорд. Штанга в шоке, тренер в восторге.","Новый рекорд! Вес не знал, с кем связался.","Рекорд побит. Вчерашняя ты аплодирует стоя.","Новый рекорд. Запиши дату, это красиво."]};
+const LVL_LINES={m:["Новый уровень! Твой герой сходил переодеться.","Новый уровень! Герой примеряет новую форму."],f:["Новый уровень! Твоя героиня сходила переодеться.","Новый уровень! Героиня примеряет новый образ."]};
+const GRP_LINES={m:["Засчитано. Тренер запомнил тебя в лицо.","Группа сделана. Коврик сказал спасибо.","Засчитано. Ты был не самым громким, но самым упорным."],
+  f:["Засчитано. Тренер запомнила тебя в лицо.","Группа сделана. Коврик сказал спасибо.","Засчитано. Ты была не самой громкой, но самой упорной."]};
+const sexKey=()=>S.prof.sex==="f"?"f":"m";
+const hashPick=(arr,id,salt="")=>{let h=0;for(const ch of String(id)+salt)h=(h*31+ch.charCodeAt(0))>>>0;return arr[h%arr.length]};
+const titleFor=id=>hashPick(TITLES[sexKey()],id,"t");
+// фраза: новый уровень важнее рекорда, рекорд важнее группового, иначе обычная
+function phraseFor(id,o={}){const k=sexKey();
+  if(o.lvUp)return hashPick(LVL_LINES[k],id);if(o.pr)return hashPick(PR_LINES[k],id);if(o.grp)return hashPick(GRP_LINES[k],id);
+  return hashPick(PHRASES[k],id)}
 const fmtInt=n=>String(Math.round(n)).replace(/\B(?=(\d{3})+(?!\d))/g," ");
 const nedel=n=>{const a=n%10,b=n%100;return a===1&&b!==11?"неделя":a>=2&&a<=4&&(b<10||b>=20)?"недели":"недель"};
 // счёт тренировок по месяцам: {"2026-11":{user_id:N}}; before — только раньше этой даты (ISO)
@@ -1196,7 +1235,7 @@ function goalCards(){
   const g=goals(),out=[];
   if(g.perWeek){const c=weekCount();out.push(`<div class="card goal"><div class="row between"><h2>Тренировок на этой неделе</h2><span class="num" style="font-size:26px">${c} из ${g.perWeek}</span></div>
     <div class="weekdots">${Array.from({length:g.perWeek},(_,i)=>`<i class="${i<c?"on":""}"></i>`).join("")}</div>
-    <div class="muted" style="font-size:13px">${c>=g.perWeek?"Неделя засчитана. Красава!":"Осталось "+(g.perWeek-c)+". Групповые занятия тоже считаются."}</div></div>`)}
+    <div class="muted" style="font-size:13px">${c>=g.perWeek?"Неделя засчитана. Так держать!":"Осталось "+(g.perWeek-c)+". Групповые занятия тоже считаются."}</div></div>`)}
   if(g.record&&g.record.x&&g.record.kg){const bb=bestE1rm(g.record.x),kg=+g.record.kg,pct=bb?Math.min(100,bb.v/kg*100):0;
     out.push(`<div class="card goal"><div class="row between"><h2>Цель: ${esc(exName(g.record.x))} ${fmtKg(kg)} кг</h2><span class="num">${bb?fmtKg(Math.round(bb.v*2)/2):"—"} кг</span></div>
     <div class="bar"><i style="width:${pct}%"></i></div>
@@ -1798,7 +1837,7 @@ function showFamW(id,wid){
   <div class="exlog">${exLog(w)}</div>`}
   <button class="btn ghost full" data-act="close-sheet-btn">Закрыть</button>`);
 }
-/* окно «Красава» после тренировки и после группового занятия */
+/* окно поздравления после тренировки и после группового занятия */
 function showSummary(w,before){
   const st=calcStats(),grp=isGroup(w);
   const prs=st.prByW[w.id]||[];
@@ -1806,9 +1845,9 @@ function showSummary(w,before){
   const newM=TRACKS.map(t=>{let hi=-1;t.steps.forEach((x,i)=>{if(st.medals[t.id+":"+i]&&!before.medals[t.id+":"+i])hi=i});return hi<0?null:{t,i:hi,n:medalName(t,hi)}}).filter(Boolean);
   const dp=st.points-before.points,lvUp=st.level.n>before.level.n;
   const sets=(w.exercises||[]).reduce((a,e)=>a+e.sets.filter(s=>s.done).length,0);
-  const info={w,grp,prs,newM,dp,st,lvUp,sets,kc:kcal(w),phrase:phraseFor(w.id),nick:nick(),like:grp?null:liftLike(tonnage(w)),dsi:(st.si||0)-(before.si||0),frz:(st.freezes||0)>(before.freezes||0)};
+  const info={w,grp,prs,newM,dp,st,lvUp,sets,kc:kcal(w),phrase:phraseFor(w.id,{lvUp,pr:prs.length>0,grp}),title:titleFor(w.id),nick:nick(),like:grp?null:liftLike(tonnage(w)),dsi:(st.si||0)-(before.si||0),frz:(st.freezes||0)>(before.freezes||0)};
   S.story={info,file:null,url:null};makeStory(info).catch(()=>{});
-  sheet(`<div class="row">${wPlate(w)}<div><div class="eyebrow">${grp?"Засчитано":"Тренировка сохранена"} · ${esc(wTitle(w))}</div><h1 style="font-size:30px!important">Красава${info.nick?", "+esc(info.nick):""}!</h1></div></div>
+  sheet(`<div class="row">${wPlate(w)}<div><div class="eyebrow">${grp?"Засчитано":"Тренировка сохранена"} · ${esc(wTitle(w))}</div><h1 style="font-size:30px!important">${esc(info.title)}${info.nick?", "+esc(info.nick):""}!</h1></div></div>
   <div class="phrase">${esc(info.phrase)}</div>
   ${grp?`<div class="kv"><div><b>${w.min}</b><span>минут</span></div><div><b>≈${fmtInt(info.kc)}</b><span>ккал</span></div><div><b>${st.thisWeek}</b><span>на этой неделе</span></div></div>`
   :`<div class="kv"><div><b>${fdur(workMin(w)*60000)}</b><span>время</span></div><div><b>${fmtInt(tonnage(w))}</b><span>тоннаж, кг</span></div><div><b>≈${fmtInt(info.kc)}</b><span>ккал</span></div></div>`}
@@ -1845,7 +1884,7 @@ async function makeStory(info){
   x.textAlign="left";x.textBaseline="alphabetic";
   const d=new Date(info.w.startedAt);
   x.fillStyle=mu;x.font=`700 44px ${B}`;x.fillText("ЗАЛ · "+DOW[d.getDay()]+", "+d.getDate()+" "+MON[d.getMonth()]+" "+d.getFullYear(),80,150);
-  x.fillStyle=fg;fitText(x,"КРАСАВА"+(info.nick?",":"!"),`800 {s}px ${D}`,250,W-150);x.fillText("КРАСАВА"+(info.nick?",":"!"),72,690);
+  x.fillStyle=fg;fitText(x,info.title.toUpperCase()+(info.nick?",":"!"),`800 {s}px ${D}`,250,W-150);x.fillText(info.title.toUpperCase()+(info.nick?",":"!"),72,690);
   let y=690;
   if(info.nick){x.fillStyle=plateCol;fitText(x,info.nick.toUpperCase()+"!",`800 {s}px ${D}`,200,W-160);x.fillText(info.nick.toUpperCase()+"!",72,y+190);y+=190}
   x.fillStyle=mu;x.font=`700 52px ${B}`;x.fillText(wTitle(info.w),80,y+90);y+=90;
@@ -1859,8 +1898,8 @@ async function makeStory(info){
   x.font=`800 54px ${B}`;x.fillStyle="#3f78ea";x.fillText("Уровень "+info.st.level.n+" «"+info.st.level.name+"»",80,y);
   x.fillStyle=mu;x.font=`700 44px ${B}`;x.fillText("Стрик "+info.st.streak+" "+nedel(info.st.streak)+" · +"+info.dp+" очков",80,y+66);y+=150;
   if(info.like){x.fillStyle=fg;fitText(x,info.like.e+" "+fmtInt(tonnage(info.w))+" кг, это "+info.like.txt,`700 {s}px ${B}`,52,W-160);x.fillText(info.like.e+" "+fmtInt(tonnage(info.w))+" кг, это "+info.like.txt,80,y);y+=110}
-  x.fillStyle=fg;x.font=`600 50px ${B}`;y=wrapText(x,"«"+info.phrase+"»",80,y,W-160,64)+120;
-  const lines=[...info.prs.slice(0,3).map(p=>["Рекорд",p.n+(p.w>0?" "+fmtKg(p.w)+"×"+p.r:" "+p.r+" повт."),"#e4b12a"]),...info.newM.slice(0,2).map(m=>["Медаль",m.n,"#46b06a"])];
+  x.fillStyle=fg;x.font=`600 50px ${B}`;y=wrapText(x,info.phrase,80,y,W-160,64)+120;
+  const lines=[...info.prs.slice(0,3).map(p=>["Рекорд",p.n+(p.w>0?" "+fmtKg(p.w)+"×"+p.r:" "+p.r+" повт."),"#e4b12a"]),...info.newM.slice(0,2).map(m=>["Награда",m.n,"#46b06a"])];
   for(const [k,v,col] of lines.slice(0,Math.max(0,Math.floor((H-40-y)/90)+1))){x.fillStyle=col;roundRect(x,80,y-46,170,60,12);x.fill();x.fillStyle="#1e2124";x.font=`800 36px ${B}`;x.fillText(k,98,y-4);
     x.fillStyle=fg;fitText(x,v,`700 {s}px ${B}`,44,W-160-200);x.fillText(v,272,y-2);y+=90}
   const blob=await new Promise(r=>c.toBlob(r,"image/png"));c.remove();
