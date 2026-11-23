@@ -18,7 +18,7 @@
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Sofia+Sans:wght@400;500;600;700;800&family=Sofia+Sans+Extra+Condensed:wght@700;800&display=swap">
 <style>
 /* «Гриф и мел» (v7). Графит, сталь и мел; цвета блинов A/B/C = красный 25, синий 20, жёлтый 15 кг.
-   Одна смелая деталь: на главном экране гриф с блином следующей тренировки. Остальное спокойно.
+   Одна смелая деталь: на главном экране герой на сцене (v18), свет под ним цвета блина следующей тренировки. Остальное спокойно.
    Шрифт один: Sofia Sans; узкая версия (Extra Condensed) для весов, таймера и заголовков, как табло в зале. */
 :root{
   --bg:#e3e5e6; --surface:#f2f3f3; --surface-2:#d6d9db; --line:#c5c9cc;
@@ -78,18 +78,6 @@ h2{font-family:var(--f-body);font-weight:700;font-size:17px}
 .plate.lg{width:56px;height:56px;font-size:28px}
 .pA{--c:var(--plate-a)} .pB{--c:var(--plate-b)} .pC{--c:var(--plate-c)} .pD{--c:var(--plate-g)}
 
-/* главная: гриф с блином следующей тренировки */
-.next{--c:var(--fg);position:relative;overflow:hidden;padding:126px 18px 16px;border-radius:20px}
-.next:has(.pA){--c:var(--plate-a)} .next:has(.pB){--c:var(--plate-b)} .next:has(.pC){--c:var(--plate-c)} .next:has(.pD){--c:var(--plate-g)}
-.next::before{content:"";position:absolute;left:-10px;right:0;top:62px;height:9px;border-radius:2px;
-  background:repeating-linear-gradient(90deg,transparent 0 3px,rgba(0,0,0,.18) 3px 4px),linear-gradient(180deg,var(--steel-2),var(--steel-1) 55%,var(--steel-3))}
-.next::after{content:"";position:absolute;right:-4px;top:56px;width:86px;height:21px;border-radius:3px;
-  background:linear-gradient(180deg,var(--steel-2),var(--steel-1) 50%,var(--steel-3));box-shadow:-78px 0 0 -4px var(--steel-3)}
-.next .plate.lg{position:absolute;right:86px;top:14px;width:40px;height:105px;border-radius:7px;font-size:26px;z-index:1;
-  background:linear-gradient(90deg,color-mix(in srgb,#fff 14%,var(--c)),var(--c) 35%,color-mix(in srgb,#000 22%,var(--c)));
-  box-shadow:-10px 0 0 -6px color-mix(in srgb,#000 30%,var(--c))}
-.next h1{font-size:46px;margin-top:2px!important}
-.next .meta{font-size:16px}
 .btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:50px;padding:0 18px;border-radius:12px;font-weight:700;font-size:17px}
 .btn.primary{background:var(--fg);color:var(--bg)}
 .btn.plateA{background:var(--plate-a);color:var(--on-plate)}
@@ -100,22 +88,8 @@ h2{font-family:var(--f-body);font-weight:700;font-size:17px}
 .btn.danger{background:transparent;color:var(--plate-a);border:1.5px solid var(--plate-a)}
 .btn.full{width:100%}
 .btn.sm{min-height:38px;font-size:15px;padding:0 13px;border-radius:10px}
-.next .btn{min-height:56px;font-size:19px}
 
-/* выбор программы: три блина на полу */
-.picker{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
-.pick{background:transparent;border-radius:14px;padding:12px 10px;display:flex;flex-direction:column;align-items:flex-start;gap:6px;text-align:left;min-width:0;border:1.5px solid var(--line)}
-.pick .plate.sm{width:40px;height:40px;font-size:20px;box-shadow:inset 0 0 0 3px color-mix(in srgb,#000 22%,var(--c)),inset 0 0 0 5px color-mix(in srgb,#fff 18%,var(--c))}
-.pick .t{font-weight:700;font-size:14px;line-height:1.2}
-.pick .s{font-size:13px;color:var(--muted)}
-.pick[aria-current="true"]{border-color:var(--fg);background:var(--surface)}
 
-/* цифры: одна строка, как табло */
-.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:0;border-block:1.5px solid var(--line);padding-block:10px}
-.stat{padding:2px 12px;min-width:0;border-left:1.5px solid var(--line)}
-.stat:first-child{border-left:0;padding-left:2px}
-.stat b{display:block;font-family:var(--f-num);font-size:40px;line-height:1;font-weight:800}
-.stat span{font-size:13px;color:var(--muted)}
 
 .goal{display:flex;flex-direction:column;gap:8px}
 .goal .row .num{font-size:26px}
@@ -219,7 +193,7 @@ select.inp{appearance:none;font-weight:600;background-image:linear-gradient(45de
 .chart .goaltext{fill:var(--plate-g)}
 .empty{padding:22px 16px;text-align:center;color:var(--muted);font-size:15px}
 .toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(84px + var(--bot) - var(--gap));z-index:80;background:var(--fg);color:var(--bg);padding:11px 18px;border-radius:12px;font-size:15px;font-weight:700}
-@media (max-width:380px){.picker .pick .s{display:none}.set{grid-template-columns:16px 1fr 1fr 48px;gap:6px}.step{grid-template-columns:28px 1fr 28px}.check{width:48px;height:48px}.step input{font-size:26px}.next h1{font-size:40px}}
+@media (max-width:380px){.set{grid-template-columns:16px 1fr 1fr 48px;gap:6px}.step{grid-template-columns:28px 1fr 28px}.check{width:48px;height:48px}.step input{font-size:26px}}
 @media (prefers-reduced-motion:no-preference){.ex,.pick,.btn,.check{transition:background-color .15s,opacity .15s,transform .1s}.btn:active,.check:active,.pick:active{transform:scale(.97)}}
 /* v8: «Как делать», «Заменить», подсказки прогрессии, затемнение и «Погнали» */
 .ex-a{display:flex;gap:8px;flex-wrap:wrap;margin-top:-2px}
@@ -284,8 +258,6 @@ select.inp{appearance:none;font-weight:600;background-image:linear-gradient(45de
 .lvup{display:flex;align-items:flex-end;justify-content:center;gap:10px;padding:4px 0}.lvup .figw:first-child{opacity:.45}.lvup .arr{font-size:28px;color:var(--muted);align-self:center}
 .like{display:flex;gap:12px;align-items:center;background:var(--surface-2);border-radius:14px;padding:10px 14px;font-size:15px;line-height:1.25}.like .e{font-size:34px;line-height:1}
 .set .cup{font-size:20px;line-height:1}
-.awards{display:flex;flex-direction:column;gap:10px;width:100%;text-align:left}
-.awards .t{font-weight:800;font-size:18px;line-height:1.1}
 .lvl{display:grid;place-items:center;width:52px;height:52px;border-radius:50%;background:var(--plate-b);color:#fff;font-size:30px;flex:none;box-shadow:inset 0 0 0 3px color-mix(in srgb,#000 22%,var(--plate-b)),inset 0 0 0 5px color-mix(in srgb,#fff 18%,var(--plate-b))}
 .medals{display:grid;grid-template-columns:repeat(3,1fr);gap:14px 8px}
 .mcell{display:flex;flex-direction:column;align-items:center;text-align:center;gap:4px;min-width:0}
@@ -314,6 +286,8 @@ select.inp{appearance:none;font-weight:600;background-image:linear-gradient(45de
 .stage .meta{font-size:14px;color:var(--muted);margin-top:6px;line-height:1.25}
 .stage .go{margin-top:12px;min-height:52px;font-size:18px}
 .stage .linkbtn{justify-self:start;margin-top:8px;font-size:14px}
+.stage .linkbtn{text-align:left}
+@media (max-width:380px){.stage{grid-template-columns:96px 1fr;column-gap:10px}.stage .figw{width:96px;height:180px}.stage h1{font-size:31px}}
 .stage.nohero{grid-template-columns:1fr;grid-template-rows:auto;padding-left:16px;background:var(--surface)}
 .wpick{display:flex;gap:8px;overflow-x:auto;scrollbar-width:none;margin-inline:-16px;padding-inline:16px}
 .wpick::-webkit-scrollbar{display:none}
@@ -325,11 +299,9 @@ select.inp{appearance:none;font-weight:600;background-image:linear-gradient(45de
 .wp.add{padding:0 16px;color:var(--muted)}
 .wk{display:flex;flex-direction:column;gap:12px;width:100%;text-align:left}
 .wk .lv{display:grid;grid-template-columns:auto 1fr auto;gap:8px 12px;align-items:center}
-.wk .lv .figw.xs{grid-row:1/3}
 .wk .lv .nm{font-weight:800;font-size:16px;line-height:1.1}
 .wk .lv .nm span{font-weight:500;color:var(--muted)}
 .wk .lv .bar{height:8px;grid-column:1/-1}
-.wk .lv:has(.figw) .bar{grid-column:2/-1}
 .wk .lv .to{grid-column:3;grid-row:1;text-align:right;font-size:13px;color:var(--muted)}
 .wk .lv .to b{font-family:var(--f-num);font-size:17px;color:var(--fg)}
 .days{display:grid;grid-template-columns:repeat(7,1fr);gap:6px;justify-items:center}
@@ -1165,17 +1137,16 @@ function vToday(){
   <div class="muted num" style="text-align:center;font-size:11px"><span data-act="diag">версия 18 · ${C.user?cloudLabel():S.workouts.length?"данные только на телефоне":"данных пока нет"}</span>${S.diag?"<br>"+diag():""}</div>
   </div>`;
 }
-/* v18: главная. Вариант «Сцена» (A) — герой большой рядом с тренировкой; «Компакт» (B) — герой маленький в полосе недели */
-const HOME_V=()=>LS.get("zal_home","a");
+/* v18: главная «Сцена»: герой рядом со следующей тренировкой, под ним свет цвета её блина */
 function nextCard(nk,planK,p){
-  const st=S.workouts.length?calcStats():{level:levelFor(0)},big=HOME_V()==="a"&&HERO_READY&&S.prof.sex;
+  const st=S.workouts.length?calcStats():{level:levelFor(0)},big=HERO_READY;
   return `<div class="card stage${big?"":" nohero"}" style="--c:var(--plate-${({A:"a",B:"b",C:"c",D:"g"})[pc(nk)]})">
     ${big?figFor(st,S.prof.sex,""):""}
     <div class="info"><div class="eyebrow">${nk===planK?"Сегодня по плану":"Выбрана вручную"}</div>
     <h1>${esc(p.title)}</h1>
     <div class="meta">${p.focus?esc(p.focus)+"<br>":""}${p.ex.length} упражнений, ~60 мин</div></div>
     <button class="btn plate${pc(nk)} full go" data-act="start" data-k="${esc(nk)}">Начать</button>
-    <button class="linkbtn" data-act="preview" data-k="${esc(nk)}">Посмотреть упражнения и веса</button>
+    <button class="linkbtn" data-act="preview" data-k="${esc(nk)}">Упражнения и веса</button>
   </div>`;
 }
 const IC={fire:`<svg class="ico" viewBox="0 0 16 16" aria-hidden="true"><path fill="var(--plate-a)" d="M8 1c1 3 4 4.5 4 8.5A4 4 0 0 1 4 9.5C4 7 5.5 6 6 4c.8 1 1 2 1 3 1-1.5 1.2-4 1-6z"/></svg>`,
@@ -1192,9 +1163,8 @@ function weekCard(){
     if(w){const g=isGroup(w),k=g?"Г":(w.prog||"•"),c=g?"g":({A:"a",B:"b",C:"c",D:"g"})[pc(w.prog)];
       return `<div class="d${cls}"><span class="o done" style="--c:var(--plate-${c})">${esc(k)}</span>${lbl}</div>`}
     return `<div class="d${cls}"><span class="o"></span>${lbl}</div>`}).join("");
-  const small=HOME_V()!=="a"&&HERO_READY&&S.prof.sex;
   return `<button class="card wk" data-tab-go="profile" aria-label="Уровень ${L.n}, стрик ${st.streak}">
-    <div class="lv">${small?figFor(st,S.prof.sex,"xs"):""}
+    <div class="lv">
       <div class="nm">Уровень ${L.n} <span>${esc(L.name)}</span></div>
       <div class="to">ещё <b>${fmtInt(L.to-st.points)}</b> очков</div>
       ${levelBar(st)}</div>
@@ -1663,16 +1633,6 @@ function figFor(st,sex,cls){if(!HERO_READY)return "";const n=Math.max(1,Math.min
 function heroRow(st,sex){const cur=Math.min(HERO_MAX,st.level.n);
   return `<div class="herorow" aria-label="Все стадии героя">${LEVELS.map(([f,nm],i)=>`<div class="hs${i+1<=cur?"":" lock"}${i+1===cur?" cur":""}">${i+1<=cur?`<img src="${heroSrc(i+1,sex)}" alt="" loading="lazy" decoding="async">`:`<i class="q" aria-label="Откроется на уровне ${i+1}">?</i>`}<b>${i+1}</b><span>${esc(nm)}</span></div>`).join("")}</div>`}
 function levelBar(st){const L=st.level,pct=Math.max(0,Math.min(100,(st.points-L.from)/(L.to-L.from)*100));return `<div class="bar"><i style="width:${pct}%;background:var(--plate-b)"></i></div>`}
-function awardsCard(){
-  if(!S.workouts.length)return "";
-  const st=calcStats(),L=st.level,got=Object.keys(st.medals).length;
-  return `<button class="card awards" data-tab-go="profile" aria-label="Награды: уровень ${L.n}, стрик ${st.streak}">
-    <div class="row between"><div class="row" style="gap:12px">${HERO_READY?figFor(st,S.prof.sex,"sm"):`<span class="lvl num">${L.n}</span>`}<div style="text-align:left"><div class="eyebrow">Уровень ${L.n}</div><div class="t">${esc(L.name)}</div></div></div>
-    <div style="text-align:right"><div class="num" style="font-size:30px;line-height:1">${st.streak}</div><div class="eyebrow">${nedel(st.streak)} стрик</div></div></div>
-    ${levelBar(st)}
-    <div class="row between muted" style="font-size:13px"><span>${fmtInt(st.points)} очков · до уровня ${L.n+1}: ${fmtInt(L.to-st.points)}</span><span>медали ${got} из ${MEDALS.length} ›</span></div>
-  </button>`;
-}
 function awardsSection(st,other,sex){
   st=st||calcStats();const L=st.level;
   const recs=Object.entries(st.best).filter(([,b])=>b.w>0).sort((a,b)=>b[1].v-a[1].v).slice(0,8);
