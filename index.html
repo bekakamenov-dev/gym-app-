@@ -9,6 +9,8 @@
 <meta name="apple-mobile-web-app-title" content="Зал">
 <meta name="apple-mobile-web-app-status-bar-style" content="black">
 <meta name="theme-color" content="#1e2124">
+<script>/* тема приложения (v23): auto / light / dark, хранится на этом устройстве */
+(function(){try{var t=JSON.parse(localStorage.getItem("zal_theme")||'"auto"');if(t==="light"||t==="dark")document.documentElement.dataset.theme=t}catch(e){}})();</script>
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="icon-180.png?v=10">
 <link rel="icon" href="icon-192.png?v=10">
@@ -532,6 +534,12 @@ const PROG_DAYS=14; // прибавка не чаще раза в 14 дней
 
 /* ---------- хранение (ключи zal_*, домен github.io общий) ---------- */
 const LS={get(k,d){try{const v=localStorage.getItem(k);return v?JSON.parse(v):d}catch(e){return d}},set(k,v){try{localStorage.setItem(k,JSON.stringify(v));return true}catch(e){return false}},del(k){try{localStorage.removeItem(k)}catch(e){}}};
+// тема (v23): "auto" — как в телефоне; light/dark — только в «Зале»
+const themeGet=()=>{const t=LS.get("zal_theme","auto");return t==="light"||t==="dark"?t:"auto"};
+function themeApply(){const t=themeGet(),r=document.documentElement;if(t==="auto")delete r.dataset.theme;else r.dataset.theme=t;
+  const m=document.querySelector('meta[name="theme-color"]');if(m)m.content=getComputedStyle(r).getPropertyValue("--bg").trim()||"#1e2124"}
+function themeSet(t){LS.set("zal_theme",t);themeApply()}
+themeApply();try{matchMedia("(prefers-color-scheme: dark)").addEventListener("change",themeApply)}catch(e){}
 const clone=o=>JSON.parse(JSON.stringify(o));
 function normWorkout(w){return {...w,exercises:(w.exercises||[]).map(e=>({x:e.x||idFor(e.n),n:e.n||exById(e.x).n,sets:(e.sets||[]).map(s=>({w:+s.w||0,r:+s.r||0,done:!!s.done}))}))}}
 function slotDef(slot){const ex=exById(slot.x);return {...ex,x:ex.id,s:slot.s,r:slot.r,rest:slot.rest??ex.rest,w0:slot.w0??ex.w0,note:slot.note||""}}
@@ -1198,7 +1206,7 @@ function vToday(){
   ${weekCard()}
   ${goalCards()}
   ${cloudCard()}
-  <div class="muted num" style="text-align:center;font-size:11px"><span data-act="diag">версия 22 · ${C.user?cloudLabel():S.workouts.length?"данные только на телефоне":"данных пока нет"}</span>${S.diag?"<br>"+diag():""}</div>
+  <div class="muted num" style="text-align:center;font-size:11px"><span data-act="diag">версия 23 · ${C.user?cloudLabel():S.workouts.length?"данные только на телефоне":"данных пока нет"}</span>${S.diag?"<br>"+diag():""}</div>
   </div>`;
 }
 /* v18: главная «Сцена»: герой рядом со следующей тренировкой, под ним свет цвета её блина */
@@ -1608,6 +1616,9 @@ function vProfile(){
   ${C.user?`<div class="card stack"><h2>Облако</h2><div class="muted" style="font-size:14px">${cloudLabel()}${q?" · ждут отправки: "+q:""}${C.lastSync?"<br>Последняя синхронизация: "+fdateL(C.lastSync)+" "+new Date(C.lastSync).toTimeString().slice(0,5):""}</div>
     <button class="btn ghost sm" data-act="sync">Синхронизировать сейчас</button>
     ${C.admin?`<button class="btn ghost sm" data-act="account">Семья: кто может входить</button>`:""}</div>`:cloudCard()}
+  <div class="card stack"><h2>Тема</h2>
+    <div class="seg">${[["auto","Авто"],["light","Светлая"],["dark","Тёмная"]].map(([v,l])=>`<button type="button" data-act="theme" data-v="${v}" aria-pressed="${themeGet()===v}">${l}</button>`).join("")}</div>
+    <div class="muted" style="font-size:13px">«Авто» — как в настройках телефона. Выбор хранится на этом устройстве.</div></div>
   ${backupCard()}
   <button class="linkbtn" data-act="onb-again">Пройти знакомство заново</button>
   ${C.user?`<button class="btn danger full" data-act="logout">Выйти</button>`:""}
@@ -2008,6 +2019,7 @@ document.addEventListener("click",async ev=>{
     case "grp-min":S.grp.min=Math.max(5,Math.min(300,S.grp.min+(+t.dataset.d)));drawGroup();break;
     case "grp-save":saveGroup();break;
     case "pv":S.progView=t.dataset.v;render();break;
+    case "theme":themeSet(t.dataset.v);render();break;
     case "p-sex":S.prof.sex=t.dataset.v;saveProfile();render();break;
     case "photo-reset":delete S.prof.photo;saveProfile();render();break;
     case "rm-day":{const rm=S.prof.remind||{days:[],time:"19:00"};const v=+t.dataset.d;rm.days=(rm.days||[]).includes(v)?rm.days.filter(x=>x!==v):[...(rm.days||[]),v];S.prof.remind=rm;saveProfile();render();break}
